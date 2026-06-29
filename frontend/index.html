@@ -69,10 +69,6 @@
     .btn-purple { background: linear-gradient(135deg, #f472b6, #ec4899); color: white; padding: 10px 16px; border: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 12px rgba(236,72,153,0.3); }
     .btn-purple:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(236,72,153,0.4); filter: brightness(1.1); }
     
-    /* Input & Select styles overrides */
-    input, select { background: rgba(255, 255, 255, 0.65) !important; color: #1e293b !important; border-color: rgba(255, 255, 255, 0.8) !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-    input:focus, select:focus { background: rgba(255, 255, 255, 0.95) !important; border-color: #818cf8 !important; outline: none; }
-    
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -547,9 +543,9 @@
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Game Mode</label>
-                  <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
-                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>Player vs AI</button>
-                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>Player vs Player</button>
+                  <div className="flex rounded-lg p-1 bg-slate-100/60 border border-slate-300 shadow-inner">
+                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-indigo-500 text-white shadow-md" : "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"}`}>Player vs AI</button>
+                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-indigo-500 text-white shadow-md" : "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"}`}>Player vs Player</button>
                   </div>
                 </div>
 
@@ -557,14 +553,14 @@
                   <>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Play As</label>
-                      <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
-                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
-                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
+                      <div className="flex rounded-lg p-1 bg-slate-100/60 border border-slate-300 shadow-inner">
+                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-indigo-500 text-white shadow-md" : "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
+                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-indigo-500 text-white shadow-md" : "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">AI Level</label>
-                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-white/50 transition focus:border-slate-500 bg-transparent">
+                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-slate-300 shadow-inner bg-white/90 focus:border-indigo-500 focus:bg-white">
                         <option value="easy">Easy (10 Sims)</option>
                         <option value="medium">Medium (30 Sims)</option>
                         <option value="hard">Hard (50 Sims)</option>
@@ -573,7 +569,7 @@
                     </div>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Rules</label>
-                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-white/50 transition focus:border-slate-500 bg-transparent">
+                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-slate-300 shadow-inner bg-white/90 focus:border-indigo-500 focus:bg-white">
                         <option value={0}>Gomoku (Free-style)</option>
                         <option value={1}>Caro (Blocked = No Win)</option>
                       </select>
@@ -584,9 +580,9 @@
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Board Size</label>
                   <div className="flex gap-2 items-center">
-                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/50 text-slate-800 transition focus:border-slate-500 bg-transparent" />
+                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-slate-300 shadow-inner text-slate-800 bg-white/90 focus:border-indigo-500 focus:bg-white" />
                     <span className="text-slate-600 font-bold">×</span>
-                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/50 text-slate-800 transition focus:border-slate-500 bg-transparent" />
+                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-slate-300 shadow-inner text-slate-800 bg-white/90 focus:border-indigo-500 focus:bg-white" />
                   </div>
                 </div>
 
@@ -697,7 +693,7 @@
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-lg p-3 mb-3 bg-transparent border border-white/40">
+                  <div className="rounded-lg p-3 mb-3 bg-slate-100/60 border border-slate-300 shadow-inner">
                     <div className="text-center text-[10px] font-bold text-slate-600 mb-2 uppercase tracking-widest">Replay</div>
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <button onClick={() => undo(historyIndex)} disabled={historyIndex <= 0} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-backward-fast text-xs"></i></button>
@@ -738,9 +734,9 @@
                   <div className="text-[10px] text-slate-600 text-center mb-2">Left click = X · Right click = O · Click piece to remove</div>
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <span className="text-xs text-slate-600">Next:</span>
-                    <div className="flex rounded-lg overflow-hidden bg-transparent border border-white/50">
-                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-indigo-500 text-white shadow-sm" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>X</button>
-                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-red-500 text-white shadow-sm" : "bg-white/50 text-slate-600 hover:text-red-600 hover:bg-white/80"}`}>O</button>
+                    <div className="flex rounded-lg overflow-hidden bg-slate-100/60 border border-slate-300 shadow-inner">
+                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-indigo-500 text-white shadow-sm" : "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"}`}>X</button>
+                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-red-500 text-white shadow-sm" : "bg-transparent text-slate-500 hover:text-red-600 hover:bg-slate-200/50"}`}>O</button>
                     </div>
                   </div>
                   <div className="flex gap-2">
