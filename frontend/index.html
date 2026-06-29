@@ -47,6 +47,35 @@
       70% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
       100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
     }
+    /* Aurora Background Animations */
+    @keyframes aurora1 {
+      0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+      25%  { transform: translate(10%, 15%) rotate(5deg) scale(1.1); }
+      50%  { transform: translate(-5%, 25%) rotate(-3deg) scale(0.95); }
+      75%  { transform: translate(-15%, 10%) rotate(7deg) scale(1.05); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    @keyframes aurora2 {
+      0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+      30%  { transform: translate(-20%, -10%) rotate(-5deg) scale(1.15); }
+      60%  { transform: translate(10%, -20%) rotate(8deg) scale(0.9); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    @keyframes aurora3 {
+      0%   { transform: translate(0, 0) scale(1); opacity: 0.3; }
+      33%  { transform: translate(15%, -15%) scale(1.2); opacity: 0.5; }
+      66%  { transform: translate(-10%, 10%) scale(0.85); opacity: 0.25; }
+      100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    }
+    .aurora-blob-1 {
+      animation: aurora1 20s ease-in-out infinite;
+    }
+    .aurora-blob-2 {
+      animation: aurora2 25s ease-in-out infinite;
+    }
+    .aurora-blob-3 {
+      animation: aurora3 18s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
@@ -572,10 +601,11 @@
 
       return (
         <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 relative overflow-hidden">
-          {/* Dynamic Lively Background */}
-          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-indigo-600/20 to-purple-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '10s' }}></div>
-          <div className="absolute top-[40%] -right-[10%] w-[60%] h-[80%] rounded-full bg-gradient-to-tl from-blue-600/20 to-emerald-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '15s' }}></div>
-          <div className="absolute inset-0 bg-slate-950/40 pointer-events-none z-0 backdrop-blur-3xl"></div>
+          {/* Aurora Lively Background */}
+          <div className="aurora-blob-1 absolute -top-[30%] -left-[15%] w-[80%] h-[80%] rounded-full bg-gradient-to-br from-violet-600/30 via-indigo-500/25 to-blue-600/20 blur-[120px] pointer-events-none z-0"></div>
+          <div className="aurora-blob-2 absolute top-[30%] -right-[15%] w-[70%] h-[90%] rounded-full bg-gradient-to-tl from-cyan-500/25 via-emerald-500/20 to-teal-600/25 blur-[120px] pointer-events-none z-0"></div>
+          <div className="aurora-blob-3 absolute bottom-[-20%] left-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-r from-fuchsia-600/20 via-pink-500/15 to-rose-500/20 blur-[130px] pointer-events-none z-0"></div>
+          <div className="aurora-blob-1 absolute top-[10%] right-[30%] w-[40%] h-[40%] rounded-full bg-gradient-to-bl from-blue-400/15 to-indigo-600/20 blur-[100px] pointer-events-none z-0" style={{ animationDelay: '-7s', animationDuration: '22s' }}></div>
 
           {/* Sidebar / Topnav */}
           <div className="w-full md:w-80 glass-panel md:min-h-screen p-6 flex flex-col border-r border-slate-700/50 z-10">
