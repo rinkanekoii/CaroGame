@@ -255,9 +255,10 @@
         return foundThreats;
       };
 
-      const saveToHistory = (boardState, player, lm, topMoves = [], score = 0.0) => {
+      const saveToHistory = (boardState, player, lm, topMoves = [], score = 0.0, branchIndex = null) => {
         setHistory((prev) => {
-          const newHistory = prev.slice(0, historyIndex + 1);
+          const indexToUse = branchIndex !== null ? branchIndex : prev.length - 1;
+          const newHistory = prev.slice(0, indexToUse + 1);
           return [
             ...newHistory,
             {
@@ -269,7 +270,7 @@
             },
           ];
         });
-        setHistoryIndex(historyIndex + 1);
+        setHistoryIndex((prev) => branchIndex !== null ? branchIndex + 1 : prev + 1);
       };
 
       const undo = (steps = 1) => {
@@ -298,8 +299,8 @@
         setWinner(null);
       };
 
-      const handleUndo = () => { if (!isReplaying) undo(1); };
-      const handleRedo = () => { if (!isReplaying) redo(1); };
+      const handleUndo = () => { if (!isReplaying) undo(gameMode === "pva" ? 2 : 1); };
+      const handleRedo = () => { if (!isReplaying) redo(gameMode === "pva" ? 2 : 1); };
 
       const toggleReplay = () => {
         if (isReplaying) {
@@ -333,7 +334,7 @@
           setBoard(newBoard);
           setLastMove([row, col]);
           const nextPlayer = currentPlayer === "X" ? "O" : "X";
-          saveToHistory(newBoard, nextPlayer, [row, col], [], evalScore);
+          saveToHistory(newBoard, nextPlayer, [row, col], [], evalScore, historyIndex);
           setThreats(detectThreats(newBoard));
 
           if (checkWinner(newBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
@@ -366,7 +367,7 @@
         setLastMove([row, col]);
         setThreats(detectThreats(humanBoard));
         const aiSymbol = playerSymbol === "X" ? "O" : "X";
-        saveToHistory(humanBoard, aiSymbol, [row, col], [], evalScore);
+        saveToHistory(humanBoard, aiSymbol, [row, col], [], evalScore, historyIndex);
 
         if (checkWinner(humanBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
           setWinner(currentPlayer);
@@ -478,7 +479,7 @@
           setCurrentPlayer(game.current_player === 1 ? "X" : "O");
           if (game.ai_move && game.ai_move.length === 2) {
             setLastMove(game.ai_move);
-            saveToHistory(game.board, playerSymbol, game.ai_move, game.top_ai_moves || []);
+            saveToHistory(game.board, playerSymbol, game.ai_move, game.top_ai_moves || [], 0.0, -1);
           } else {
             saveToHistory(game.board, customNextPlayer === 1 ? "X" : "O", null, []);
           }
@@ -516,7 +517,7 @@
                 setLastMove(game.ai_move);
                 saveToHistory(game.board, playerSymbol, game.ai_move, game.top_ai_moves || []);
               } else {
-                saveToHistory(game.board, "X", null, []);
+                saveToHistory(game.board, "X", null, [], 0.0, -1);
               }
             } catch (error) {
               alert("Failed: " + error.message);
@@ -766,7 +767,7 @@
                     {/* Eval Bar */}
                     <div className="w-5 rounded-lg overflow-hidden bg-blue-600 flex flex-col justify-end relative mr-2 border border-white/50/50" style={{ height: `${boardRows * cellSize}px`, marginTop: '0px' }}>
                       <div className="w-full transition-all duration-700 ease-in-out bg-rose-600" style={{ height: `${Math.max(0, Math.min(100, (1.0 - evalScore) / 2.0 * 100))}%` }}></div>
-                      <div className="absolute top-1/2 left-0 right-0 h-px bg-black/40 z-10"></div>
+                      
                       <div className="absolute inset-0 flex flex-col justify-between items-center py-1.5 z-20 pointer-events-none">
                         <div className="flex flex-col items-center drop-shadow-md">
                           <span className="text-[10px] font-black text-white leading-none">X</span>
@@ -815,7 +816,7 @@
                           className={`board-cell border border-slate-300 transition flex items-center justify-center text-xl sm:text-2xl relative disabled:cursor-not-allowed ${isThreat ? "bg-rose-500/20" : "hover:bg-slate-100"}`}
                           style={{ width: `${cellSize}px`, height: `${cellSize}px`, fontSize: `${Math.floor(cellSize * 0.6)}px` }}
                         >
-                          {isLastMove && <div className="absolute w-3/4 h-3/4 rounded-full bg-yellow-500/30"></div>}
+                          {isLastMove && <div className="absolute inset-0 bg-indigo-500/20 z-0 pointer-events-none"></div>}
 
                           {isTop1Move && (
                             <div className="absolute inset-0 flex items-center justify-center bg-blue-500/30 rounded-full z-10 m-1">
