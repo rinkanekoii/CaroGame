@@ -26,7 +26,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body { margin: 0; font-family: 'Inter', sans-serif; background-color: #0c111b; color: #e2e8f0; overflow-x: hidden; }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #121212; color: #e2e8f0; overflow-x: hidden; }
     .board-cell { position: relative; transition: background-color 0.15s ease; }
     .board-cell:hover:not(:disabled) { background-color: rgba(99,102,241,0.12); }
     .piece-x { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -34,11 +34,11 @@
     @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.4); } 70% { box-shadow: 0 0 0 6px rgba(56,189,248,0); } 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); } }
     .ai-prob-badge { animation: pulse 2s infinite; }
-    .sidebar-card { background: #161d2e; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .sidebar-card { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
     .btn { border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border-radius: 10px; transition: all 0.15s ease; font-size: 13px; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-secondary { background: #1e2740; color: #94a3b8; padding: 8px 14px; }
-    .btn-secondary:hover:not(:disabled) { background: #283352; color: #e2e8f0; }
+    .btn-secondary { background: #2d2d2d; color: #94a3b8; padding: 8px 14px; }
+    .btn-secondary:hover:not(:disabled) { background: #3d3d3d; color: #e2e8f0; }
     .btn-primary { background: #4f46e5; color: white; padding: 10px 16px; }
     .btn-primary:hover:not(:disabled) { background: #6366f1; }
     .btn-amber { background: #d97706; color: white; padding: 10px 16px; }
@@ -504,8 +504,8 @@
 
       if (showSettings) {
         return (
-          <div className="min-h-screen flex items-center justify-center" style={{background:'#0c111b'}}>
-            <div className="rounded-2xl p-8 w-full max-w-md" style={{background:'#161d2e'}}>
+          <div className="min-h-screen flex items-center justify-center" style={{background:'#121212'}}>
+            <div className="rounded-2xl p-8 w-full max-w-md" style={{background:'#1e1e1e'}}>
               <div className="text-center mb-6">
                 <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
                 <h1 className="text-3xl font-black text-cyan-400">CaroNet AI</h1>
@@ -514,7 +514,7 @@
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Game Mode</label>
-                  <div className="flex rounded-lg p-1" style={{background:'#0c111b'}}>
+                  <div className="flex rounded-lg p-1" style={{background:'#121212'}}>
                     <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-white"}`}>Player vs AI</button>
                     <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-white"}`}>Player vs Player</button>
                   </div>
@@ -524,14 +524,14 @@
                   <>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Play As</label>
-                      <div className="flex rounded-lg p-1" style={{background:'#0c111b'}}>
+                      <div className="flex rounded-lg p-1" style={{background:'#121212'}}>
                         <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-blue-600 text-white" : "text-slate-500 hover:text-white"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
                         <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-rose-600 text-white" : "text-slate-500 hover:text-white"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">AI Level</label>
-                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-white text-sm font-semibold outline-none border border-white/5 transition focus:border-indigo-500" style={{background:'#0c111b'}}>
+                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-white text-sm font-semibold outline-none border border-white/5 transition focus:border-indigo-500" style={{background:'#121212'}}>
                         <option value="easy">Easy (10 Sims)</option>
                         <option value="medium">Medium (30 Sims)</option>
                         <option value="hard">Hard (50 Sims)</option>
@@ -540,7 +540,7 @@
                     </div>
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Rules</label>
-                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-white text-sm font-semibold outline-none border border-white/5 transition focus:border-indigo-500" style={{background:'#0c111b'}}>
+                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-white text-sm font-semibold outline-none border border-white/5 transition focus:border-indigo-500" style={{background:'#121212'}}>
                         <option value={0}>Gomoku (Free-style)</option>
                         <option value={1}>Caro (Blocked = No Win)</option>
                       </select>
@@ -551,9 +551,9 @@
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Board Size</label>
                   <div className="flex gap-2 items-center">
-                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/5 text-white transition focus:border-indigo-500" style={{background:'#0c111b'}} />
+                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/5 text-white transition focus:border-indigo-500" style={{background:'#121212'}} />
                     <span className="text-slate-600 font-bold">×</span>
-                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/5 text-white transition focus:border-indigo-500" style={{background:'#0c111b'}} />
+                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/5 text-white transition focus:border-indigo-500" style={{background:'#121212'}} />
                   </div>
                 </div>
 
@@ -572,9 +572,9 @@
       const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex].topAiMoves || []) : []);
 
       return (
-        <div className="min-h-screen flex flex-col" style={{background: '#0c111b'}}>
+        <div className="min-h-screen flex flex-col" style={{background: '#121212'}}>
           {/* ─── Navbar ─── */}
-          <header className="h-14 flex items-center justify-between px-5 border-b border-white/5" style={{background:'#111827'}}>
+          <header className="h-14 flex items-center justify-between px-5 border-b border-white/5" style={{background:'#181818'}}>
             <div className="flex items-center gap-3">
               <img src="assets/favicon.png" alt="" className="w-9 h-9 rounded-xl" />
               <div className="leading-tight">
@@ -582,8 +582,9 @@
                 <div className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold">MCTS v2.0</div>
               </div>
             </div>
-            <button onClick={() => setShowSettings(true)} className="btn btn-secondary w-8 h-8 !p-0 rounded-full">
-              <i className="fa-solid fa-gear text-sm"></i>
+            {/* Gear slightly larger */}
+            <button onClick={() => setShowSettings(true)} className="btn btn-secondary w-10 h-10 !p-0 rounded-full">
+              <i className="fa-solid fa-gear text-lg"></i>
             </button>
           </header>
 
@@ -591,7 +592,7 @@
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
             {/* ─── Left Sidebar ─── */}
-            <aside className="w-full md:w-64 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto" style={{background:'#0f1524'}}>
+            <aside className="w-full md:w-64 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto" style={{background:'#1a1a1a'}}>
 
               {/* Status */}
               <div className="sidebar-card">
@@ -631,7 +632,7 @@
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-lg p-3 mb-3" style={{background:'#0c111b'}}>
+                  <div className="rounded-lg p-3 mb-3" style={{background:'#121212'}}>
                     <div className="text-center text-[10px] font-bold text-amber-400 mb-2 uppercase tracking-widest">Replay</div>
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <button onClick={() => undo(historyIndex)} disabled={historyIndex <= 0} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-backward-fast text-xs"></i></button>
@@ -661,16 +662,16 @@
             </aside>
 
             {/* ─── Main Board Area ─── */}
-            <main className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-auto" style={{background:'#0c111b'}}>
+            <main className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-auto" style={{background: 'linear-gradient(135deg, #181818, #121212, #181818)'}}>
 
               {/* AI Predictions (top-right overlay) */}
               {currentRankingMoves.length > 0 && !isReplaying && (
-                <div className="absolute top-4 right-4 sidebar-card !mb-0 !p-4 z-20 border border-white/5 min-w-[140px] shadow-2xl">
-                  <div className="text-[11px] font-bold text-indigo-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <div className="absolute top-4 right-4 sidebar-card !mb-0 !p-4 z-20 border border-white/5 min-w-[150px] shadow-2xl">
+                  <div className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <i className="fa-solid fa-microchip text-sm"></i> AI Predictions
                   </div>
                   {currentRankingMoves.map((m, idx) => (
-                    <div key={idx} className="flex items-center gap-3 text-[13px] font-mono leading-loose">
+                    <div key={idx} className="flex items-center gap-3 text-sm font-mono leading-loose">
                       <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
                       <span className="text-slate-200">{String.fromCharCode(65 + m.col)}{m.row + 1}</span>
                       <span className="text-indigo-400 font-bold ml-auto">{Math.round(m.prob * 100)}%</span>
@@ -688,7 +689,7 @@
                   <div className="text-[10px] text-slate-500 text-center mb-2">Left click = X · Right click = O · Click piece to remove</div>
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <span className="text-xs text-slate-400">Next:</span>
-                    <div className="flex rounded-lg overflow-hidden" style={{background:'#0c111b'}}>
+                    <div className="flex rounded-lg overflow-hidden" style={{background:'#121212'}}>
                       <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-blue-600 text-white" : "text-slate-500 hover:text-white"}`}>X</button>
                       <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-rose-600 text-white" : "text-slate-500 hover:text-white"}`}>O</button>
                     </div>
@@ -702,7 +703,7 @@
               )}
 
               {/* ─── Board Panel ─── */}
-              <div className="rounded-2xl p-3 md:p-5 relative max-w-full overflow-auto" style={{background:'#161d2e'}}>
+              <div className="rounded-2xl p-3 md:p-5 relative max-w-full overflow-auto" style={{background:'#1e1e1e'}}>
 
                 {/* Replay badge */}
                 {isReplaying && (
