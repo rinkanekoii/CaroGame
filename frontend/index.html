@@ -537,7 +537,9 @@
           <div className="min-h-screen flex items-center justify-center bg-transparent text-slate-800 p-4">
             <div className="rounded-2xl p-8 w-full max-w-lg glass-panel border border-white/40 shadow-2xl">
               <div className="text-center mb-6">
-                <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-full mx-auto mb-3 shadow-sm" />
+                <div className="w-24 h-24 rounded-full overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.15)] border-2 border-white/80 mx-auto mb-4 flex items-center justify-center bg-white">
+                  <img src="assets/favicon.png" alt="" className="w-full h-full object-cover scale-[1.35]" />
+                </div>
                 <h1 className="text-4xl font-black text-slate-900">CaroNet AI</h1>
                 <div className="text-sm font-bold tracking-[0.2em] text-slate-600 mb-6">MCTS V2.0 • Neural AlphaZero</div>
               </div>
@@ -605,8 +607,10 @@
         <div className="min-h-screen flex flex-col bg-transparent text-slate-800">
           {/* ─── Navbar ─── */}
           <header className="h-16 flex items-center justify-between px-5 border-b border-white/40 glass-panel">
-            <div className="flex items-center gap-3">
-              <img src="assets/favicon.png" alt="" className="w-11 h-11 rounded-full shadow-sm" />
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-full overflow-hidden shadow-md border-2 border-white/80 flex-shrink-0 flex items-center justify-center bg-white">
+                <img src="assets/favicon.png" alt="" className="w-full h-full object-cover scale-[1.35]" />
+              </div>
               <div className="leading-tight">
                 <span className="text-2xl font-black text-slate-900">CaroNet</span>
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-600 font-bold">MCTS v2.0</div>
