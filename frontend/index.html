@@ -26,31 +26,58 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body { margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; background-color: #0c111b; color: #e2e8f0; }
-    .bg-theme-bg { background-color: #0c111b; } /* slate-950/blue dark */
-    .bg-theme-panel { background-color: #161d2e; } 
-    .bg-theme-card { background-color: #1e293b; } 
+    body { 
+      margin: 0; 
+      font-family: 'Inter', sans-serif; 
+      background: url('assets/thumbnail.png') no-repeat center center fixed; 
+      background-size: cover;
+      color: #1e293b; 
+      overflow-x: hidden; 
+    }
     
-    .board-cell { position: relative; transition: background-color 0.15s ease; }
-    .board-cell:hover:not(:disabled) { background-color: rgba(99,102,241,0.12); }
-    .piece-x { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .piece-o { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+    
+    .board-cell { position: relative; transition: all 0.2s ease; border-color: rgba(0,0,0,0.1); }
+    .board-cell:hover:not(:disabled) { background-color: rgba(255,255,255,0.7); box-shadow: inset 0 0 10px rgba(255,255,255,0.8); }
+    
+    .piece-x { color: #6366f1; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 2px 4px rgba(99,102,241,0.3); }
+    .piece-o { color: #84cc16; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 2px 4px rgba(132,204,22,0.3); }
+    
     @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.4); } 70% { box-shadow: 0 0 0 6px rgba(56,189,248,0); } 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); } }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); } 70% { box-shadow: 0 0 0 6px rgba(99,102,241,0); } 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); } }
     .ai-prob-badge { animation: pulse 2s infinite; }
     
-    .sidebar-card { background-color: #161d2e; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
-    .btn { border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border-radius: 10px; transition: all 0.15s ease; font-size: 14px; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-secondary { background: #1e2740; color: #94a3b8; padding: 8px 14px; }
-    .btn-secondary:hover:not(:disabled) { background: #283352; color: #e2e8f0; }
+    .sidebar-card { background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .btn { border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border-radius: 10px; transition: all 0.2s ease; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
     
-    .btn-primary { background: #4f46e5; color: white; padding: 10px 16px; }
-    .btn-primary:hover:not(:disabled) { background: #6366f1; }
-    .btn-amber { background: #d97706; color: white; padding: 10px 16px; }
-    .btn-amber:hover:not(:disabled) { background: #f59e0b; }
-    .btn-purple { background: #7c3aed; color: white; padding: 10px 16px; }
-    .btn-purple:hover:not(:disabled) { background: #8b5cf6; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.7); color: #334155; padding: 8px 14px; border: 1px solid rgba(255,255,255,0.9); }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.95); color: #0f172a; transform: translateY(-1px); }
+    
+    .btn-primary { background: linear-gradient(135deg, #818cf8, #6366f1); color: white; padding: 10px 16px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(99,102,241,0.4); filter: brightness(1.1); }
+    
+    .btn-amber { background: linear-gradient(135deg, #a3e635, #84cc16); color: white; padding: 10px 16px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 12px rgba(132,204,22,0.3); }
+    .btn-amber:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(132,204,22,0.4); filter: brightness(1.1); }
+    
+    .btn-purple { background: linear-gradient(135deg, #f472b6, #ec4899); color: white; padding: 10px 16px; border: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 12px rgba(236,72,153,0.3); }
+    .btn-purple:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(236,72,153,0.4); filter: brightness(1.1); }
+    
+    /* Input & Select styles overrides */
+    input, select { background: rgba(255, 255, 255, 0.65) !important; color: #1e293b !important; border-color: rgba(255, 255, 255, 0.8) !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+    input:focus, select:focus { background: rgba(255, 255, 255, 0.95) !important; border-color: #818cf8 !important; outline: none; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
   </style>
 </head>
 <body>
@@ -510,34 +537,34 @@
 
       if (showSettings) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-theme-bg text-slate-200 p-4">
-            <div className="rounded-2xl p-8 w-full max-w-lg bg-theme-card border border-slate-800/50 shadow-2xl">
+          <div className="min-h-screen flex items-center justify-center bg-transparent text-slate-800 p-4">
+            <div className="rounded-2xl p-8 w-full max-w-lg glass-panel border border-white/40 shadow-2xl">
               <div className="text-center mb-6">
                 <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
-                <h1 className="text-3xl font-black text-slate-100">CaroNet AI</h1>
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">MCTS v2.0 · Neural AlphaZero</div>
+                <h1 className="text-3xl font-black text-slate-900">CaroNet AI</h1>
+                <div className="text-[10px] uppercase tracking-widest text-slate-600 font-bold mt-1">MCTS v2.0 · Neural AlphaZero</div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Game Mode</label>
-                  <div className="flex rounded-lg p-1 bg-theme-bg border border-slate-800">
-                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-slate-700 text-white shadow" : "text-slate-500 hover:text-white"}`}>Player vs AI</button>
-                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-slate-700 text-white shadow" : "text-slate-500 hover:text-white"}`}>Player vs Player</button>
+                  <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Game Mode</label>
+                  <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
+                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}>Player vs AI</button>
+                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}>Player vs Player</button>
                   </div>
                 </div>
 
                 {gameMode === "pva" && (
                   <>
                     <div>
-                      <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Play As</label>
-                      <div className="flex rounded-lg p-1 bg-theme-bg border border-slate-800">
-                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-slate-700 text-white shadow" : "text-slate-500 hover:text-white"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
-                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-slate-700 text-white shadow" : "text-slate-500 hover:text-white"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
+                      <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Play As</label>
+                      <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
+                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
+                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">AI Level</label>
-                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-slate-200 text-sm font-semibold outline-none border border-slate-700 transition focus:border-slate-500 bg-theme-bg">
+                      <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">AI Level</label>
+                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-white/50 transition focus:border-slate-500 bg-transparent">
                         <option value="easy">Easy (10 Sims)</option>
                         <option value="medium">Medium (30 Sims)</option>
                         <option value="hard">Hard (50 Sims)</option>
@@ -545,8 +572,8 @@
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Rules</label>
-                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-slate-200 text-sm font-semibold outline-none border border-slate-700 transition focus:border-slate-500 bg-theme-bg">
+                      <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Rules</label>
+                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-slate-800 text-sm font-semibold outline-none border border-white/50 transition focus:border-slate-500 bg-transparent">
                         <option value={0}>Gomoku (Free-style)</option>
                         <option value={1}>Caro (Blocked = No Win)</option>
                       </select>
@@ -555,11 +582,11 @@
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-400 uppercase tracking-wider">Board Size</label>
+                  <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Board Size</label>
                   <div className="flex gap-2 items-center">
-                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-slate-700 text-slate-200 transition focus:border-slate-500 bg-theme-bg" />
+                    <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/50 text-slate-800 transition focus:border-slate-500 bg-transparent" />
                     <span className="text-slate-600 font-bold">×</span>
-                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-slate-700 text-slate-200 transition focus:border-slate-500 bg-theme-bg" />
+                    <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full p-2.5 rounded-lg text-center font-bold text-sm border border-white/50 text-slate-800 transition focus:border-slate-500 bg-transparent" />
                   </div>
                 </div>
 
@@ -578,18 +605,18 @@
       const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex]?.topAiMoves || []) : []);
 
       return (
-        <div className="min-h-screen flex flex-col bg-theme-bg text-slate-200">
+        <div className="min-h-screen flex flex-col bg-transparent text-slate-800">
           {/* ─── Navbar ─── */}
-          <header className="h-14 flex items-center justify-between px-5 border-b border-slate-800 bg-theme-panel">
+          <header className="h-14 flex items-center justify-between px-5 border-b border-white/40 glass-panel">
             <div className="flex items-center gap-3">
               <img src="assets/favicon.png" alt="" className="w-9 h-9 rounded-xl" />
               <div className="leading-tight">
-                <span className="text-lg font-black text-slate-100">CaroNet</span>
-                <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold">MCTS v2.0</div>
+                <span className="text-lg font-black text-slate-900">CaroNet</span>
+                <div className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-bold">MCTS v2.0</div>
               </div>
             </div>
             {/* Gear slightly larger */}
-            <button onClick={() => setShowSettings(true)} className="btn w-10 h-10 !p-0 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700 shadow-sm transition-colors">
+            <button onClick={() => setShowSettings(true)} className="btn w-10 h-10 !p-0 rounded-full bg-white/60 text-slate-600 hover:bg-white/80 hover:text-slate-900 border border-white/50 shadow-sm transition-colors">
               <i className="fa-solid fa-gear text-lg"></i>
             </button>
           </header>
@@ -598,28 +625,28 @@
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
             {/* ─── Left Sidebar ─── */}
-            <aside className="w-full md:w-72 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto bg-theme-panel border-r border-slate-800">
+            <aside className="w-full md:w-72 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto glass-panel border-r border-white/40">
 
               {/* Status */}
               <div className="sidebar-card">
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Status</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-600 font-bold mb-3">Status</div>
                 {winner ? (
                   <div className="text-center py-3">
-                    <i className="fa-solid fa-trophy text-2xl text-slate-400 mb-1"></i>
-                    <div className="text-lg font-black text-slate-100">Player {winner} Wins!</div>
+                    <i className="fa-solid fa-trophy text-2xl text-slate-600 mb-1"></i>
+                    <div className="text-lg font-black text-slate-900">Player {winner} Wins!</div>
                   </div>
                 ) : isAiThinking ? (
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full border-2 border-slate-400 border-t-transparent animate-spin flex-shrink-0"></div>
                     <div>
-                      <div className="text-slate-300 font-bold text-sm">AI is thinking…</div>
-                      <div className="text-[10px] text-slate-500">Evaluating paths</div>
+                      <div className="text-slate-700 font-bold text-sm">AI is thinking…</div>
+                      <div className="text-[10px] text-slate-600">Evaluating paths</div>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 text-sm">Turn</span>
-                    <span className={`text-xl font-black text-slate-100`}>{currentPlayer}</span>
+                    <span className="text-slate-600 text-sm">Turn</span>
+                    <span className={`text-xl font-black text-slate-900`}>{currentPlayer}</span>
                   </div>
                 )}
               </div>
@@ -627,7 +654,7 @@
               {/* AI Predictions in Sidebar */}
               {currentRankingMoves.length > 0 && !isReplaying && (
                 <div className="sidebar-card">
-                  <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2 flex items-center gap-1.5">
+                  <div className="text-[10px] uppercase tracking-widest text-slate-600 font-bold mb-2 flex items-center gap-1.5">
                     <i className="fa-solid fa-microchip text-xs"></i> AI Predictions
                   </div>
                   <div className="flex flex-col gap-1.5 mt-2">
@@ -635,9 +662,9 @@
                       <div key={idx} className="flex items-center justify-between text-[11px] font-mono">
                         <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-slate-500"></div>
-                          <span className="text-slate-300">{String.fromCharCode(65 + m.col)}{m.row + 1}</span>
+                          <span className="text-slate-700">{String.fromCharCode(65 + m.col)}{m.row + 1}</span>
                         </div>
-                        <span className="text-slate-400 font-bold">{Math.round(m.prob * 100)}%</span>
+                        <span className="text-slate-600 font-bold">{Math.round(m.prob * 100)}%</span>
                       </div>
                     ))}
                   </div>
@@ -646,7 +673,7 @@
 
               {/* Controls */}
               <div className="sidebar-card flex-1">
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Controls</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-600 font-bold mb-3">Controls</div>
 
                 {!isReplaying ? (
                   <div className="grid grid-cols-2 gap-2 mb-3">
@@ -658,12 +685,12 @@
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-lg p-3 mb-3 bg-theme-bg border border-slate-800">
-                    <div className="text-center text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Replay</div>
+                  <div className="rounded-lg p-3 mb-3 bg-transparent border border-white/40">
+                    <div className="text-center text-[10px] font-bold text-slate-600 mb-2 uppercase tracking-widest">Replay</div>
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <button onClick={() => undo(historyIndex)} disabled={historyIndex <= 0} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-backward-fast text-xs"></i></button>
                       <button onClick={() => undo(1)} disabled={historyIndex <= 0} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-caret-left"></i></button>
-                      <span className="text-slate-300 font-mono font-bold text-xs w-10 text-center">{Math.max(0, historyIndex)}/{Math.max(0, history.length - 1)}</span>
+                      <span className="text-slate-700 font-mono font-bold text-xs w-10 text-center">{Math.max(0, historyIndex)}/{Math.max(0, history.length - 1)}</span>
                       <button onClick={() => redo(1)} disabled={historyIndex >= history.length - 1} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-caret-right"></i></button>
                       <button onClick={() => redo(history.length - 1 - historyIndex)} disabled={historyIndex >= history.length - 1} className="btn btn-secondary !p-0 w-8 h-8"><i className="fa-solid fa-forward-fast text-xs"></i></button>
                     </div>
@@ -693,15 +720,15 @@
               {/* Custom Setup bar */}
               {isCustomMode && (
                 <div className="sidebar-card !mb-3 w-full max-w-lg border border-slate-600">
-                  <div className="text-center text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  <div className="text-center text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     <i className="fa-solid fa-chess-board mr-1"></i>Custom Board Setup
                   </div>
-                  <div className="text-[10px] text-slate-500 text-center mb-2">Left click = X · Right click = O · Click piece to remove</div>
+                  <div className="text-[10px] text-slate-600 text-center mb-2">Left click = X · Right click = O · Click piece to remove</div>
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <span className="text-xs text-slate-400">Next:</span>
-                    <div className="flex rounded-lg overflow-hidden bg-theme-bg border border-slate-700">
-                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`}>X</button>
-                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`}>O</button>
+                    <span className="text-xs text-slate-600">Next:</span>
+                    <div className="flex rounded-lg overflow-hidden bg-transparent border border-white/50">
+                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-slate-700 text-white" : "text-slate-600 hover:text-white"}`}>X</button>
+                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-slate-700 text-white" : "text-slate-600 hover:text-white"}`}>O</button>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -713,7 +740,7 @@
               )}
 
               {/* ─── Board Panel ─── */}
-              <div className="rounded-2xl p-3 md:p-5 relative max-w-full overflow-auto bg-theme-card border border-slate-800 shadow-xl">
+              <div className="rounded-2xl p-3 md:p-5 relative max-w-full overflow-auto glass-panel border border-white/40 shadow-xl">
 
                 {/* Replay badge */}
                 {isReplaying && (
@@ -729,7 +756,7 @@
                   <div className="flex items-start gap-1">
 
                     {/* Eval Bar */}
-                    <div className="w-5 rounded-lg overflow-hidden bg-blue-600 flex flex-col justify-end relative mr-2 border border-slate-700/50" style={{ height: `${boardRows * cellSize}px`, marginTop: '0px' }}>
+                    <div className="w-5 rounded-lg overflow-hidden bg-blue-600 flex flex-col justify-end relative mr-2 border border-white/50/50" style={{ height: `${boardRows * cellSize}px`, marginTop: '0px' }}>
                       <div className="w-full transition-all duration-700 ease-in-out bg-rose-600" style={{ height: `${Math.max(0, Math.min(100, (1.0 - evalScore) / 2.0 * 100))}%` }}></div>
                       <div className="absolute top-1/2 left-0 right-0 h-px bg-black/40 z-10"></div>
                       <div className="absolute inset-0 flex flex-col justify-between items-center py-1.5 z-20 pointer-events-none">
@@ -748,7 +775,7 @@
                     {/* Row labels */}
                     <div className="flex flex-col justify-between mr-0.5" style={{ height: `${boardRows * cellSize}px` }}>
                       {Array.from({length: boardRows}).map((_, i) => (
-                        <div key={`r${i}`} className="flex items-center justify-end font-bold text-slate-500 text-[10px] w-5" style={{ height: `${cellSize}px` }}>
+                        <div key={`r${i}`} className="flex items-center justify-end font-bold text-slate-600 text-[10px] w-5" style={{ height: `${cellSize}px` }}>
                           {i + 1}
                         </div>
                       ))}
@@ -810,7 +837,7 @@
                     <div className="w-5 mr-0.5"></div>
                     <div className="flex border-2 border-transparent">
                       {Array.from({length: boardCols}).map((_, j) => (
-                        <div key={`c${j}`} className="flex justify-center font-bold text-slate-500 text-[10px]" style={{ width: `${cellSize}px` }}>
+                        <div key={`c${j}`} className="flex justify-center font-bold text-slate-600 text-[10px]" style={{ width: `${cellSize}px` }}>
                           {String.fromCharCode(65 + j)}
                         </div>
                       ))}
