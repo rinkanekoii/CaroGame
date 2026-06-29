@@ -31,17 +31,6 @@
     .bg-theme-panel { background-color: #161d2e; } 
     .bg-theme-card { background-color: #1e293b; } 
     
-    @keyframes panelShine {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .bg-aurora {
-      background-image: linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.9), rgba(30, 58, 138, 0.25));
-      background-size: 200% 200%;
-      animation: panelShine 15s ease infinite;
-    }
-
     .board-cell { position: relative; transition: background-color 0.15s ease; }
     .board-cell:hover:not(:disabled) { background-color: rgba(99,102,241,0.12); }
     .piece-x { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -521,7 +510,7 @@
 
       if (showSettings) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-theme-bg bg-aurora text-slate-200 p-4">
+          <div className="min-h-screen flex items-center justify-center bg-theme-bg text-slate-200 p-4">
             <div className="rounded-2xl p-8 w-full max-w-lg bg-theme-card border border-slate-800/50 shadow-2xl">
               <div className="text-center mb-6">
                 <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
@@ -589,9 +578,9 @@
       const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex]?.topAiMoves || []) : []);
 
       return (
-        <div className="min-h-screen flex flex-col bg-theme-bg bg-aurora text-slate-200">
+        <div className="min-h-screen flex flex-col bg-theme-bg text-slate-200">
           {/* ─── Navbar ─── */}
-          <header className="h-14 flex items-center justify-between px-5 border-b border-slate-800 bg-theme-panel/80 backdrop-blur-md">
+          <header className="h-14 flex items-center justify-between px-5 border-b border-slate-800 bg-theme-panel">
             <div className="flex items-center gap-3">
               <img src="assets/favicon.png" alt="" className="w-9 h-9 rounded-xl" />
               <div className="leading-tight">
@@ -609,7 +598,7 @@
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
             {/* ─── Left Sidebar ─── */}
-            <aside className="w-full md:w-72 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto bg-theme-panel/80 backdrop-blur-md border-r border-slate-800">
+            <aside className="w-full md:w-72 flex-shrink-0 p-4 flex flex-col gap-3 overflow-y-auto bg-theme-panel border-r border-slate-800">
 
               {/* Status */}
               <div className="sidebar-card">
