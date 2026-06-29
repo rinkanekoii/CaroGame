@@ -603,17 +603,17 @@
       return (
         <div className="min-h-screen flex flex-col bg-transparent text-slate-800">
           {/* ─── Navbar ─── */}
-          <header className="h-14 flex items-center justify-between px-5 border-b border-white/40 glass-panel">
+          <header className="h-16 flex items-center justify-between px-5 border-b border-white/40 glass-panel">
             <div className="flex items-center gap-3">
-              <img src="assets/favicon.png" alt="" className="w-9 h-9 rounded-xl" />
+              <img src="assets/favicon.png" alt="" className="w-11 h-11 rounded-xl shadow-sm" />
               <div className="leading-tight">
-                <span className="text-lg font-black text-slate-900">CaroNet</span>
-                <div className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-bold">MCTS v2.0</div>
+                <span className="text-2xl font-black text-slate-900">CaroNet</span>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-600 font-bold">MCTS v2.0</div>
               </div>
             </div>
             {/* Gear slightly larger */}
-            <button onClick={() => setShowSettings(true)} className="btn w-10 h-10 !p-0 rounded-full bg-white/60 text-slate-600 hover:bg-white/80 hover:text-slate-900 border border-white/50 shadow-sm transition-colors">
-              <i className="fa-solid fa-gear text-lg"></i>
+            <button onClick={() => setShowSettings(true)} className="btn w-12 h-12 !p-0 rounded-full bg-white/60 text-slate-600 hover:bg-white/80 hover:text-slate-900 border border-slate-300 shadow-sm transition-colors">
+              <i className="fa-solid fa-gear text-2xl"></i>
             </button>
           </header>
 
@@ -660,12 +660,12 @@
                   {currentRankingMoves.length > 0 ? (
                     <div className="flex flex-col gap-1.5 mt-2">
                       {currentRankingMoves.map((m, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs font-mono">
-                          <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-500"></div>
-                            <span className="text-slate-900 font-bold">{String.fromCharCode(65 + m.col)}{m.row + 1}</span>
+                        <div key={idx} className="flex items-center justify-between font-mono mb-1.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-2 h-2 rounded-full bg-slate-500"></div>
+                            <span className="text-slate-900 font-black text-base">{String.fromCharCode(65 + m.col)}{m.row + 1}</span>
                           </div>
-                          <span className={`${idx === 0 ? 'text-indigo-600 font-bold bg-indigo-100 px-1.5 rounded' : 'text-slate-600 font-bold'}`}>
+                          <span className={`${idx === 0 ? 'text-indigo-600 font-black text-base bg-indigo-100 px-2 py-0.5 rounded shadow-sm border border-indigo-200' : 'text-slate-600 font-bold text-sm'}`}>
                             {Math.round(m.prob * 100)}%
                           </span>
                         </div>
