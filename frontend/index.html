@@ -61,11 +61,9 @@
         if (typeof window !== "undefined") {
           const saved = localStorage.getItem("gomoku_api_base");
           if (saved) return saved;
-          return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-            ? "http://localhost:8000" 
-            : `http://${window.location.hostname}:8000`;
+          return ""; // Use relative path by default, perfect for same-domain HTTPS
         }
-        return "http://localhost:8000";
+        return "";
       });
       const [boardRows, setBoardRows] = useState(15);
       const [boardCols, setBoardCols] = useState(15);
@@ -97,7 +95,8 @@
       }, [apiBase]);
 
       const buildApiUrl = (path) => {
-        const trimmed = apiBase.trim() || "http://localhost:8000";
+        const trimmed = apiBase.trim();
+        if (!trimmed) return path; // Relative path
         const base = trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
         return `${base}${path}`;
       };
