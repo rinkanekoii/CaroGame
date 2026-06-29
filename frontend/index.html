@@ -460,6 +460,13 @@
       const startCustomGame = async () => {
         setIsCustomMode(false);
         setIsAiThinking(true);
+        // Wipe old game state since we are starting a new custom game
+        setHistory([]);
+        setHistoryIndex(-1);
+        setWinner(null);
+        setTopAiMoves([]);
+        setLastMove(null);
+
         try {
           const humanValue = playerSymbol === "X" ? 1 : -1;
           const payload = {
@@ -497,14 +504,7 @@
 
       const enterCustomMode = () => {
         setIsCustomMode(true);
-        setWinner(null);
-        setGameId(null);
-        setIsAiThinking(false);
-        setHistory([]);
-        setHistoryIndex(-1);
-        setTopAiMoves([]);
         setIsReplaying(false);
-        // Không xóa board ở đây để giữ lại bàn cờ hiện tại
       };
 
       const startGame = async () => {
@@ -755,7 +755,14 @@
                    <button onClick={() => setBoard(Array.from({ length: boardRows }, () => Array(boardCols).fill(0)))} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition">
                      <i className="fa-solid fa-eraser"></i> Clear
                    </button>
-                   <button onClick={() => { setIsCustomMode(false); initBoard(); }} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition">
+                   <button onClick={() => { 
+                       setIsCustomMode(false); 
+                       if (historyIndex >= 0 && historyIndex < history.length) {
+                         setBoard(history[historyIndex].board.map(r => [...r]));
+                       } else {
+                         initBoard();
+                       }
+                   }} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition">
                      <i className="fa-solid fa-xmark"></i> Cancel
                    </button>
                  </div>
