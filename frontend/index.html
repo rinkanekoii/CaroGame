@@ -39,17 +39,6 @@
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); } 70% { box-shadow: 0 0 0 6px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
     .ai-prob-badge { animation: pulse 2s infinite; }
     
-    @keyframes aurora {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .bg-aurora {
-      background: linear-gradient(135deg, rgba(38,38,38,0.4), rgba(10,10,10,0.9), rgba(38,38,38,0.4));
-      background-size: 200% 200%;
-      animation: aurora 15s ease infinite;
-    }
-
     .sidebar-card { background-color: #262626; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #404040; }
     .btn { border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; border-radius: 10px; transition: all 0.15s ease; font-size: 12px; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -521,7 +510,7 @@
 
       if (showSettings) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-theme-bg bg-aurora text-neutral-200">
+          <div className="min-h-screen flex items-center justify-center text-neutral-200" style={{background: 'linear-gradient(135deg, #181818, #121212, #181818)'}}>
             <div className="rounded-2xl p-8 w-full max-w-md bg-theme-card border border-neutral-700 shadow-2xl">
               <div className="text-center mb-6">
                 <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
@@ -589,7 +578,7 @@
       const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex].topAiMoves || []) : []);
 
       return (
-        <div className="min-h-screen flex flex-col bg-theme-bg bg-aurora text-neutral-200">
+        <div className="min-h-screen flex flex-col text-neutral-200" style={{background: 'linear-gradient(135deg, #181818, #121212, #181818)'}}>
           {/* ─── Navbar ─── */}
           <header className="h-14 flex items-center justify-between px-5 border-b border-neutral-800 bg-theme-panel/80 backdrop-blur-md">
             <div className="flex items-center gap-3">
