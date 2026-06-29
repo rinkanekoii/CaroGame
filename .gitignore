@@ -1,0 +1,57 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ONNX Models & Weights (Ignore heavy models, keep INT8 if you want to track it, or ignore all if downloading from elsewhere)
+# backend/model_latest_int8.onnx # Uncomment this if you don't want to push the INT8 model to Git
+*.pth
+*.pt
+backend/model_latest_fp32.onnx*
+backend/model_latest_fp16.onnx*
+backend/model_new_fp32.onnx*
+backend/replay_buffer*.npz
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+frontend/models/*.onnx

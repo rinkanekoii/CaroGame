@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  caronet:
+    build: .
+    container_name: caronet-ai
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    environment:
+      - PYTHONUNBUFFERED=1

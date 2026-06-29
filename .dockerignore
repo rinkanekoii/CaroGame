@@ -1,0 +1,11 @@
+__pycache__/
+.env
+.git
+*.pth
+*.pt
+backend/model_latest_fp32.onnx
+backend/model_latest_fp32.onnx.data
+backend/model_latest_fp16.onnx
+backend/model_latest_fp16.onnx.data
+backend/model_new_fp32.onnx.data
+backend/replay_buffer*.npz

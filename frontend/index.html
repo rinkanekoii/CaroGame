@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CaroNet AI</title>
+  <!-- React & Babel (Offline Support) -->
+  <script src="lib/react.min.js"></script>
+  <script src="lib/react-dom.min.js"></script>
+  <script src="lib/babel.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="lib/tailwindcss.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .board-cell {
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .board-cell:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .piece-x {
+      color: #0f172a;
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .piece-o {
+      color: #ef4444;
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .ai-prob-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    /** @jsx React.createElement */
+    const { useState, useEffect, useRef } = React;
+
+    const GomokuUI = () => {
+      const [apiBase, setApiBase] = useState(() => {
+        if (typeof window !== "undefined") {
+          const saved = localStorage.getItem("gomoku_api_base");
+          if (saved) return saved;
+          return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+            ? "http://localhost:8000" 
+            : `http://${window.location.hostname}:8000`;
+        }
+        return "http://localhost:8000";
+      });
+      const [boardRows, setBoardRows] = useState(15);
+      const [boardCols, setBoardCols] = useState(15);
+      const [board, setBoard] = useState(Array.from({ length: 15 }, () => Array(15).fill(0)));
+      const [currentPlayer, setCurrentPlayer] = useState("X");
+      const [winner, setWinner] = useState(null);
+      const [difficulty, setDifficulty] = useState("medium");
+      const [ruleType, setRuleType] = useState(0);
+      const [playerSymbol, setPlayerSymbol] = useState("X");
+      const [gameMode, setGameMode] = useState("pva");
+      const [showSettings, setShowSettings] = useState(true);
+      const [gameId, setGameId] = useState(null);
+      const [isAiThinking, setIsAiThinking] = useState(false);
+      const [lastMove, setLastMove] = useState(null);
+      const [history, setHistory] = useState([]);
+      const [historyIndex, setHistoryIndex] = useState(-1);
+      const [topAiMoves, setTopAiMoves] = useState([]);
+      const [isReplaying, setIsReplaying] = useState(false);
+      const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+      const [threats, setThreats] = useState(new Set());
+      const [isCustomMode, setIsCustomMode] = useState(false);
+      const [customNextPlayer, setCustomNextPlayer] = useState(1);
+      const [evalScore, setEvalScore] = useState(0.0);
+
+      useEffect(() => {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("gomoku_api_base", apiBase);
+        }
+      }, [apiBase]);
+
+      const buildApiUrl = (path) => {
+        const trimmed = apiBase.trim() || "http://localhost:8000";
+        const base = trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+        return `${base}${path}`;
+      };
+
+      const initBoard = () => {
+        const newBoard = Array.from({ length: boardRows }, () => Array(boardCols).fill(0));
+        setBoard(newBoard);
+        setWinner(null);
+        setCurrentPlayer("X");
+        setGameId(null);
+        setIsAiThinking(false);
+        setLastMove(null);
+        setHistory([]);
+        setHistoryIndex(-1);
+        setTopAiMoves([]);
+        setIsReplaying(false);
+        setIsAutoPlaying(false);
+        setThreats(new Set());
+        setEvalScore(0.0);
+      };
+
+      useEffect(() => {
+        initBoard();
+      }, [boardRows, boardCols]);
+
+      // --- POLLING LOGIC ---
+      useEffect(() => {
+        let interval;
+        if (isAiThinking && gameId) {
+          interval = setInterval(async () => {
+            try {
+              const res = await fetch(buildApiUrl(`/games/${gameId}/thinking`));
+              if (res.ok) {
+                const data = await res.json();
+                setTopAiMoves(data.top_ai_moves || []);
+              }
+            } catch (e) {}
+          }, 300);
+        }
+        return () => clearInterval(interval);
+      }, [isAiThinking, gameId]);
+
+      // --- AUTO REPLAY LOGIC ---
+      useEffect(() => {
+        let timer;
+        if (isReplaying && isAutoPlaying) {
+          timer = setInterval(() => {
+            setHistoryIndex((prev) => {
+              if (prev >= history.length - 1) {
+                setIsAutoPlaying(false);
+                return prev;
+              }
+              const nextState = history[prev + 1];
+              setBoard(nextState.board.map((r) => [...r]));
+              setCurrentPlayer(nextState.player);
+              setLastMove(nextState.lastMove);
+              setTopAiMoves(nextState.topAiMoves || []);
+              setThreats(detectThreats(nextState.board));
+              return prev + 1;
+            });
+          }, 800);
+        }
+        return () => clearInterval(timer);
+      }, [isReplaying, isAutoPlaying, history]);
+
+      const detectThreats = (b) => {
+        const foundThreats = new Set();
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        
+        for (let r = 0; r < boardRows; r++) {
+          for (let c = 0; c < boardCols; c++) {
+            if (b[r][c] === 0) continue;
+            const p = b[r][c];
+            
+            for (const [dr, dc] of directions) {
+              let seq = "";
+              let coords = [];
+              // We look at a window of 9 cells around the current stone (-4 to 4)
+              for (let i = -4; i <= 4; i++) {
+                const nr = r + dr * i, nc = c + dc * i;
+                if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
+                  seq += b[nr][nc] === p ? '1' : (b[nr][nc] === 0 ? '0' : '2');
+                  coords.push([nr, nc]);
+                } else {
+                  seq += '2';
+                  coords.push([-1, -1]);
+                }
+              }
+              
+              // 1. Check for 4-threats (4 or 5 stones in a 5-window)
+              for (let start = 0; start <= 4; start++) {
+                const window = seq.substring(start, start + 5);
+                if (!window.includes('2')) {
+                   const count1 = (window.match(/1/g) || []).length;
+                   if (count1 >= 4) {
+                      let leftBlock = start > 0 ? seq[start - 1] === '2' : true;
+                      let rightBlock = start + 5 < 9 ? seq[start + 5] === '2' : true;
+                      
+                      if (parseInt(ruleType) === 1 && leftBlock && rightBlock) {
+                         continue;
+                      }
+                      
+                      for (let k = 0; k < 5; k++) {
+                        if (window[k] === '1') {
+                          foundThreats.add(`${coords[start + k][0]},${coords[start + k][1]}`);
+                        }
+                      }
+                   }
+                }
+              }
+
+              // 2. Check for Open 3-threats (3 stones in a 6-window with 0 at both ends)
+              for (let start = 0; start <= 3; start++) {
+                const window = seq.substring(start, start + 6);
+                if (window[0] === '0' && window[5] === '0' && !window.includes('2')) {
+                   const count1 = (window.match(/1/g) || []).length;
+                   if (count1 === 3) {
+                      for (let k = 0; k < 6; k++) {
+                        if (window[k] === '1') {
+                          foundThreats.add(`${coords[start + k][0]},${coords[start + k][1]}`);
+                        }
+                      }
+                   }
+                }
+              }
+            }
+          }
+        }
+        return foundThreats;
+      };
+
+      const saveToHistory = (boardState, player, lm, topMoves = [], score = 0.0) => {
+        setHistory((prev) => [
+          ...prev,
+          {
+            board: boardState.map((r) => [...r]),
+            player,
+            lastMove: lm,
+            topAiMoves: topMoves,
+            evalScore: score,
+          },
+        ]);
+        setHistoryIndex((prev) => prev + 1);
+      };
+
+      const undo = (steps = 1) => {
+        if (historyIndex - steps < 0) return;
+        const prevState = history[historyIndex - steps];
+        setBoard(prevState.board.map(r => [...r]));
+        setCurrentPlayer(prevState.player);
+        setLastMove(prevState.lastMove);
+        setTopAiMoves(prevState.topAiMoves || []);
+        setThreats(detectThreats(prevState.board));
+        setEvalScore(prevState.evalScore || 0.0);
+        setHistoryIndex(historyIndex - steps);
+        setWinner(null);
+      };
+
+      const redo = (steps = 1) => {
+        if (historyIndex + steps >= history.length) return;
+        const nextState = history[historyIndex + steps];
+        setBoard(nextState.board.map(r => [...r]));
+        setCurrentPlayer(nextState.player);
+        setLastMove(nextState.lastMove);
+        setTopAiMoves(nextState.topAiMoves || []);
+        setThreats(detectThreats(nextState.board));
+        setEvalScore(nextState.evalScore || 0.0);
+        setHistoryIndex(historyIndex + steps);
+        setWinner(null);
+      };
+
+      const handleUndo = () => { if (!isReplaying) undo(1); };
+      const handleRedo = () => { if (!isReplaying) redo(1); };
+
+      const toggleReplay = () => {
+        if (isReplaying) {
+          setIsReplaying(false);
+          setIsAutoPlaying(false);
+          redo(history.length - 1 - historyIndex);
+        } else {
+          if (history.length === 0) return;
+          setIsReplaying(true);
+          setHistoryIndex(-1);
+          setBoard(Array.from({ length: boardRows }, () => Array(boardCols).fill(0)));
+          setThreats(new Set());
+        }
+      };
+
+      const makeMove = async (row, col) => {
+        if (winner || isAiThinking || isReplaying) return;
+        if (!board || !board[row] || board[row][col] !== 0) return;
+        
+        if (gameMode === "pva") {
+          const humanValue = playerSymbol === "X" ? 1 : -1;
+          const currentValue = currentPlayer === "X" ? 1 : -1;
+          if (currentValue !== humanValue) return;
+        }
+
+        if (gameMode === "pvp") {
+          const newBoard = board.map((r) => [...r]);
+          newBoard[row][col] = currentPlayer === "X" ? 1 : -1;
+          setBoard(newBoard);
+          setLastMove([row, col]);
+          const nextPlayer = currentPlayer === "X" ? "O" : "X";
+          saveToHistory(newBoard, nextPlayer, [row, col], [], evalScore);
+          setThreats(detectThreats(newBoard));
+
+          if (checkWinner(newBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
+            setWinner(currentPlayer);
+          } else {
+            setCurrentPlayer(nextPlayer);
+            setTopAiMoves([]); // Ẩn gợi ý nước đi trong chế độ PvP
+            fetch(buildApiUrl("/games/custom"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                board: newBoard,
+                board_rows: boardRows,
+                board_cols: boardCols,
+                next_player: nextPlayer === "X" ? 1 : -1,
+                human_player: nextPlayer === "X" ? -1 : 1,
+                difficulty: "easy", // Ép về 10 sims cho siêu nhanh
+                rule_type: ruleType
+              })
+            }).then(res => res.json()).then(data => {
+              setEvalScore(data.eval_score || 0.0);
+            }).catch(console.error);
+          }
+          return;
+        }
+
+        const humanBoard = board.map((r) => [...r]);
+        humanBoard[row][col] = currentPlayer === "X" ? 1 : -1;
+        setBoard(humanBoard);
+        setLastMove([row, col]);
+        setThreats(detectThreats(humanBoard));
+        const aiSymbol = playerSymbol === "X" ? "O" : "X";
+        saveToHistory(humanBoard, aiSymbol, [row, col], [], evalScore);
+
+        if (checkWinner(humanBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
+          setWinner(currentPlayer);
+          return;
+        }
+
+        setIsAiThinking(true);
+        setTopAiMoves([]);
+
+        try {
+          const res = await fetch(buildApiUrl(`/games/${gameId}/move`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ row, col }),
+          });
+          if (!res.ok) throw new Error("AI move failed");
+          const data = await res.json();
+          const aiBoard = data.board;
+          setBoard(aiBoard);
+          setLastMove(data.ai_move);
+          const tm = data.top_ai_moves || [];
+          setThreats(detectThreats(aiBoard));
+          setEvalScore(data.eval_score || 0.0);
+          saveToHistory(aiBoard, playerSymbol, data.ai_move, tm, data.eval_score || 0.0);
+          if (data.winner) {
+            setWinner(data.winner === 1 ? "X" : "O");
+          } else {
+            setCurrentPlayer(playerSymbol);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Lỗi AI: " + error.message);
+        } finally {
+          setIsAiThinking(false);
+        }
+      };
+
+      const checkWinner = (b, row, col, player) => {
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        for (const [dr, dc] of directions) {
+          let count = 1;
+          let blocks = 0;
+          for (let i = 1; i < 5; i++) {
+            const nr = row + dr * i, nc = col + dc * i;
+            if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
+              if (b[nr][nc] === player) count++;
+              else if (b[nr][nc] === -player) { blocks++; break; }
+              else break;
+            } else { break; }
+          }
+          for (let i = 1; i < 5; i++) {
+            const nr = row - dr * i, nc = col - dc * i;
+            if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols) {
+              if (b[nr][nc] === player) count++;
+              else if (b[nr][nc] === -player) { blocks++; break; }
+              else break;
+            } else { break; }
+          }
+          if (count >= 5) {
+            if (ruleType === 1 && count === 5 && blocks === 2) continue;
+            return true;
+          }
+        }
+        return false;
+      };
+
+      const handleCustomClick = (row, col, e) => {
+        if (!isCustomMode) return;
+        e.preventDefault();
+        const newBoard = board.map(r => [...r]);
+        if (e.type === 'contextmenu') {
+          newBoard[row][col] = newBoard[row][col] === -1 ? 0 : -1;
+        } else {
+          newBoard[row][col] = newBoard[row][col] === 1 ? 0 : 1;
+        }
+        setBoard(newBoard);
+      };
+
+      const startCustomGame = async () => {
+        setIsCustomMode(false);
+        setIsAiThinking(true);
+        try {
+          const humanValue = playerSymbol === "X" ? 1 : -1;
+          const payload = {
+            board: board,
+            board_rows: boardRows,
+            board_cols: boardCols,
+            next_player: customNextPlayer,
+            human_player: humanValue,
+            difficulty: difficulty,
+            rule_type: ruleType,
+          };
+          const res = await fetch(buildApiUrl("/games/custom"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error("Failed to create custom game");
+          const game = await res.json();
+          setGameId(game.game_id);
+          setBoard(game.board);
+          setCurrentPlayer(game.current_player === 1 ? "X" : "O");
+          if (game.ai_move && game.ai_move.length === 2) {
+            setLastMove(game.ai_move);
+            saveToHistory(game.board, playerSymbol, game.ai_move, game.top_ai_moves || []);
+          } else {
+            saveToHistory(game.board, customNextPlayer === 1 ? "X" : "O", null, []);
+          }
+        } catch (error) {
+          alert("Failed: " + error.message);
+          setIsCustomMode(true);
+        } finally {
+          setIsAiThinking(false);
+        }
+      };
+
+      const enterCustomMode = () => {
+        setIsCustomMode(true);
+        setWinner(null);
+        setGameId(null);
+        setIsAiThinking(false);
+        setHistory([]);
+        setHistoryIndex(-1);
+        setTopAiMoves([]);
+        setIsReplaying(false);
+        // Không xóa board ở đây để giữ lại bàn cờ hiện tại
+      };
+
+      const startGame = async () => {
+        setShowSettings(false);
+        initBoard();
+        if (gameMode === "pva") {
+            setIsAiThinking(true);
+            try {
+              const payload = { board_rows: boardRows, board_cols: boardCols, human_player: playerSymbol === "X" ? 1 : -1, difficulty: difficulty, rule_type: ruleType };
+              const res = await fetch(buildApiUrl("/games"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) throw new Error("Failed to create game");
+              const game = await res.json();
+              setGameId(game.game_id);
+              setBoard(game.board);
+              setCurrentPlayer(game.current_player === 1 ? "X" : "O");
+              if (game.ai_move && game.ai_move.length === 2) {
+                setLastMove(game.ai_move);
+                saveToHistory(game.board, playerSymbol, game.ai_move, game.top_ai_moves || []);
+              } else {
+                saveToHistory(game.board, "X", null, []);
+              }
+            } catch (error) {
+              alert("Failed: " + error.message);
+              setShowSettings(true);
+            } finally {
+              setIsAiThinking(false);
+            }
+        } else {
+            saveToHistory(Array.from({ length: boardRows }, () => Array(boardCols).fill(0)), "X", null, []);
+        }
+      };
+
+      const cellSize = Math.min(60, Math.floor(800 / Math.max(boardRows, boardCols)));
+
+      if (showSettings) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1635830625698-3b9bd74671ca?q=80&w=2000')] bg-cover bg-center">
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+            <div className="relative glass-panel rounded-2xl shadow-2xl p-10 w-full max-w-lg">
+              <div className="text-center mb-8">
+                <i className="fa-solid fa-brain text-5xl text-blue-400 mb-4"></i>
+                <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">CaroNet AI</h1>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold mb-2 text-slate-300">Game Mode</label>
+                  <div className="flex bg-slate-800/50 rounded-lg p-1">
+                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md ${gameMode === "pva" ? "bg-blue-500" : ""}`}>Player vs AI</button>
+                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md ${gameMode === "pvp" ? "bg-blue-500" : ""}`}>Player vs Player</button>
+                  </div>
+                </div>
+
+                {gameMode === "pva" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-slate-300">Play As</label>
+                      <div className="flex bg-slate-800/50 rounded-lg p-1">
+                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md transition flex justify-center items-center gap-2 ${playerSymbol === "X" ? "bg-slate-700 text-blue-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
+                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md transition flex justify-center items-center gap-2 ${playerSymbol === "O" ? "bg-slate-700 text-rose-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}><i className="fa-regular fa-circle"></i> O (Second)</button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-slate-300">AI Level (MCTS Sims)</label>
+                      <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full bg-slate-800 p-3 rounded-lg text-white font-semibold outline-none border border-slate-700 focus:border-blue-500 transition">
+                        <option value="easy">Easy (10 Sims) - Beginner</option>
+                        <option value="medium">Medium (30 Sims) - Intermediate</option>
+                        <option value="hard">Hard (50 Sims) - Expert</option>
+                        <option value="extreme">Extreme (100 Sims) - Terminator</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-slate-300">Rules</label>
+                      <select value={ruleType} onChange={(e) => setRuleType(Number(e.target.value))} className="w-full bg-slate-800 p-3 rounded-lg text-white font-semibold outline-none border border-slate-700 focus:border-blue-500 transition">
+                        <option value={0}>Gomoku (Free-style Connect 5)</option>
+                        <option value={1}>Caro (Blocked on both ends = No Win)</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-bold mb-2 text-slate-300">Board Dimensions</label>
+                    <div className="flex gap-2">
+                      <input type="number" value={boardCols} onChange={(e) => setBoardCols(Number(e.target.value))} className="w-full bg-slate-800 p-3 rounded-lg text-center font-bold text-lg border border-slate-700 focus:border-blue-500 transition" placeholder="Width" title="Width" />
+                      <div className="flex items-center justify-center font-bold text-slate-500">x</div>
+                      <input type="number" value={boardRows} onChange={(e) => setBoardRows(Number(e.target.value))} className="w-full bg-slate-800 p-3 rounded-lg text-center font-bold text-lg border border-slate-700 focus:border-blue-500 transition" placeholder="Height" title="Height" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-2">
+                  <button onClick={startGame} className="flex-1 bg-blue-600 p-4 rounded-xl font-bold text-lg hover:bg-blue-500 transition">START GAME</button>
+                  <button onClick={() => { setShowSettings(false); enterCustomMode(); }} className="p-4 rounded-xl font-bold bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 border border-purple-500/30 transition" title="Custom Board Setup">
+                    <i className="fa-solid fa-chess-board text-xl"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex].topAiMoves || []) : []);
+
+      return (
+        <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 relative overflow-hidden">
+          {/* Dynamic Lively Background */}
+          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-indigo-600/20 to-purple-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '10s' }}></div>
+          <div className="absolute top-[40%] -right-[10%] w-[60%] h-[80%] rounded-full bg-gradient-to-tl from-blue-600/20 to-emerald-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '15s' }}></div>
+          <div className="absolute inset-0 bg-slate-950/40 pointer-events-none z-0 backdrop-blur-3xl"></div>
+
+          {/* Sidebar / Topnav */}
+          <div className="w-full md:w-80 glass-panel md:min-h-screen p-6 flex flex-col border-r border-slate-700/50 z-10">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i className="fa-solid fa-brain text-xl text-white"></i>
+              </div>
+              <div>
+                <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">CaroNet</h1>
+                <p className="text-xs text-slate-400 font-mono tracking-widest uppercase">MCTS v2.0</p>
+              </div>
+            </div>
+
+            <div className="glass-panel bg-slate-800/40 rounded-xl p-5 mb-6 border border-slate-700/50">
+              <h3 className="text-sm text-slate-400 uppercase tracking-widest font-bold mb-4">Status</h3>
+              
+              {winner ? (
+                <div className="text-center p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                  <i className="fa-solid fa-trophy text-3xl text-emerald-400 mb-2"></i>
+                  <div className="text-xl font-bold text-emerald-400">Player {winner} Wins!</div>
+                </div>
+              ) : isAiThinking ? (
+                <div className="flex items-center gap-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+                  <div>
+                    <div className="text-blue-400 font-bold">AI is thinking...</div>
+                    <div className="text-xs text-blue-300/70">Evaluating paths</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                  <span className="text-slate-300 font-medium">Current Turn:</span>
+                  <span className={`text-2xl font-black ${currentPlayer === "X" ? "text-blue-400" : "text-rose-400"}`}>{currentPlayer}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="glass-panel bg-slate-800/40 rounded-xl p-5 mb-auto border border-slate-700/50">
+               <h3 className="text-sm text-slate-400 uppercase tracking-widest font-bold mb-4">Controls</h3>
+               
+               {!isReplaying ? (
+                 <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button onClick={handleUndo} disabled={historyIndex <= (gameMode === "pva" ? 1 : 0) || isAiThinking} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex flex-col items-center gap-1">
+                      <i className="fa-solid fa-rotate-left"></i> Undo
+                    </button>
+                    <button onClick={handleRedo} disabled={historyIndex >= history.length - (gameMode === "pva" ? 2 : 1) || isAiThinking} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium text-sm flex flex-col items-center gap-1">
+                      <i className="fa-solid fa-rotate-right"></i> Redo
+                    </button>
+                 </div>
+               ) : (
+                 <div className="bg-slate-900/50 rounded-lg p-3 mb-4 border border-amber-500/30">
+                    <div className="text-center text-xs font-bold text-amber-500 mb-2 uppercase tracking-widest">Replay Controls</div>
+                    <div className="flex justify-between items-center gap-2 mb-3">
+                       <button onClick={() => undo(historyIndex)} disabled={historyIndex <= 0} className="w-10 h-10 rounded bg-slate-700 hover:bg-amber-600 text-white disabled:opacity-50 transition flex justify-center items-center" title="Jump to Start">
+                          <i className="fa-solid fa-backward-fast"></i>
+                       </button>
+                       <button onClick={() => undo(1)} disabled={historyIndex <= 0} className="w-10 h-10 rounded bg-slate-700 hover:bg-amber-600 text-white disabled:opacity-50 transition flex justify-center items-center" title="Previous Move">
+                          <i className="fa-solid fa-caret-left text-xl"></i>
+                       </button>
+                       
+                       <span className="text-slate-300 font-mono font-bold text-sm w-12 text-center">{historyIndex + 1}/{history.length}</span>
+                       
+                       <button onClick={() => redo(1)} disabled={historyIndex >= history.length - 1} className="w-10 h-10 rounded bg-slate-700 hover:bg-amber-600 text-white disabled:opacity-50 transition flex justify-center items-center" title="Next Move">
+                          <i className="fa-solid fa-caret-right text-xl"></i>
+                       </button>
+                       <button onClick={() => redo(history.length - 1 - historyIndex)} disabled={historyIndex >= history.length - 1} className="w-10 h-10 rounded bg-slate-700 hover:bg-amber-600 text-white disabled:opacity-50 transition flex justify-center items-center" title="Jump to End">
+                          <i className="fa-solid fa-forward-fast"></i>
+                       </button>
+                    </div>
+                    <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} disabled={historyIndex >= history.length - 1 && !isAutoPlaying} className={`w-full py-2 px-4 rounded font-bold text-white disabled:opacity-50 transition flex justify-center items-center gap-2 ${isAutoPlaying ? "bg-amber-600 shadow-[0_0_10px_rgba(217,119,6,0.5)]" : "bg-blue-600 hover:bg-blue-500"}`} title={isAutoPlaying ? "Pause Auto-Replay" : "Start Auto-Replay"}>
+                        <i className={`fa-solid ${isAutoPlaying ? "fa-pause" : "fa-play"}`}></i> {isAutoPlaying ? "Pause Replay" : "Auto Play"}
+                    </button>
+                 </div>
+               )}
+
+               <button 
+                  onClick={toggleReplay} 
+                  disabled={history.length === 0 || isAiThinking}
+                  className={`w-full py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 mb-4 transition ${isReplaying ? "bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]" : "bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50"}`}
+               >
+                  <i className={`fa-solid ${isReplaying ? "fa-xmark" : "fa-film"}`}></i> 
+                  {isReplaying ? "Exit Replay" : "Enter Replay Mode"}
+               </button>
+
+               <button onClick={enterCustomMode} disabled={isAiThinking || isReplaying} className="w-full py-3 px-4 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 transition font-medium flex items-center justify-center gap-2 mb-3 disabled:opacity-50">
+                 <i className="fa-solid fa-chess-board"></i> Custom Setup
+               </button>
+
+               <button onClick={() => setShowSettings(true)} className="w-full py-3 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition font-medium flex items-center justify-center gap-2">
+                 <i className="fa-solid fa-gear"></i> Settings
+               </button>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <div className="text-xs text-slate-500 font-mono">
+                 <div>Neural AlphaZero Engine</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Board Area */}
+          <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
+             
+             {/* AI Top Moves Legend */}
+             {currentRankingMoves.length > 0 && !isReplaying && (
+                <div className="absolute top-8 right-8 glass-panel bg-slate-800/80 p-4 rounded-xl border border-blue-500/30 flex flex-col gap-2 shadow-xl shadow-blue-900/20 z-10">
+                   <div className="text-xs text-blue-300 font-bold uppercase tracking-wider mb-1"><i className="fa-solid fa-microchip mr-1"></i> AI Neural Predictions</div>
+                   {currentRankingMoves.map((m, i) => (
+                      <div key={i} className="flex items-center gap-3 text-sm">
+                         <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
+                         <span className="text-slate-300 font-mono">Move ({m.row},{m.col})</span>
+                         <span className="text-blue-400 font-bold ml-auto">{Math.round(m.prob * 100)}%</span>
+                      </div>
+                   ))}
+                </div>
+             )}
+
+             {isCustomMode && (
+               <div className="glass-panel bg-purple-900/30 border border-purple-500/30 rounded-xl p-4 mb-4 w-full max-w-lg">
+                 <div className="text-center text-sm font-bold text-purple-300 uppercase tracking-wider mb-3">
+                   <i className="fa-solid fa-chess-board mr-2"></i>Custom Board Setup
+                 </div>
+                 <div className="text-xs text-slate-400 text-center mb-3">
+                   Left click = X (black) &middot; Right click = O (red) &middot; Click piece to remove
+                 </div>
+                 <div className="flex items-center justify-center gap-3 mb-3">
+                   <span className="text-sm text-slate-300">Next player:</span>
+                   <div className="flex bg-slate-800/50 rounded-lg p-1">
+                     <button onClick={() => setCustomNextPlayer(1)} className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${customNextPlayer === 1 ? "bg-blue-500 text-white" : "text-slate-400 hover:text-white"}`}>X</button>
+                     <button onClick={() => setCustomNextPlayer(-1)} className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${customNextPlayer === -1 ? "bg-rose-500 text-white" : "text-slate-400 hover:text-white"}`}>O</button>
+                   </div>
+                 </div>
+                 <div className="flex gap-2">
+                   <button onClick={startCustomGame} className="flex-1 py-2 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition">
+                     <i className="fa-solid fa-play"></i> Start Game
+                   </button>
+                   <button onClick={() => setBoard(Array.from({ length: boardRows }, () => Array(boardCols).fill(0)))} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition">
+                     <i className="fa-solid fa-eraser"></i> Clear
+                   </button>
+                   <button onClick={() => { setIsCustomMode(false); initBoard(); }} className="py-2 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm transition">
+                     <i className="fa-solid fa-xmark"></i> Cancel
+                   </button>
+                 </div>
+               </div>
+             )}
+
+             <div className="glass-panel p-2 md:p-6 rounded-2xl border border-slate-600/50 shadow-2xl relative w-full max-w-full overflow-auto">
+                {isReplaying && (
+                  <div className="absolute -top-12 left-0 right-0 flex justify-center">
+                     <div className="bg-amber-500/20 border border-amber-500/50 text-amber-400 px-6 py-2 rounded-full font-bold text-sm tracking-widest uppercase flex items-center gap-2 shadow-lg shadow-amber-500/20 backdrop-blur-md">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        Replay Mode ({historyIndex + 1}/{history.length})
+                     </div>
+                  </div>
+                )}
+                
+                <div className="flex flex-col items-center w-full">
+                  {/* Top Column Labels */}
+                  <div className="flex items-end mb-1" style={{ width: `${boardCols * cellSize}px`, paddingLeft: '0px' }}>
+                     {Array.from({length: boardCols}).map((_, j) => (
+                        <div key={`col-${j}`} className="flex items-center justify-center font-bold text-slate-400 text-[10px] sm:text-xs" style={{ width: `${cellSize}px` }}>
+                           {j}
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="flex flex-row items-center justify-center gap-1 sm:gap-3 w-full">
+                    {/* Evaluation Bar */}
+                    <div className="w-4 md:w-6 rounded-xl overflow-hidden border-2 border-slate-700 bg-blue-500 flex flex-col justify-end shadow-lg shadow-black/50 relative mr-1 sm:mr-3" style={{ height: `${boardRows * cellSize}px` }}>
+                      <div 
+                        className="w-full transition-all duration-700 ease-in-out bg-red-500" 
+                        style={{ 
+                          height: `${Math.max(0, Math.min(100, (1.0 - evalScore) / 2.0 * 100))}%`
+                        }}
+                      ></div>
+                      {/* Zero line */}
+                      <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-slate-800/40 z-10"></div>
+                      {/* Label inside bar */}
+                      <div className="absolute inset-0 flex flex-col justify-between items-center py-2 z-20 pointer-events-none">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[12px] font-black text-white leading-none">X</span>
+                          <span className="text-[8px] sm:text-[9px] font-bold text-white/90 mt-1">{Math.round((evalScore + 1.0) / 2.0 * 100)}%</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[8px] sm:text-[9px] font-bold text-white/90 mb-1">{Math.round((1.0 - evalScore) / 2.0 * 100)}%</span>
+                          <span className="text-[12px] font-black text-white leading-none">O</span>
+                        </div>
+                      </div>
+                      {/* Floating tooltop */}
+                      <div className="absolute inset-0 z-30" title={`Win Probability: X ${Math.round((evalScore + 1.0) / 2.0 * 100)}% - O ${Math.round((1.0 - evalScore) / 2.0 * 100)}%`}></div>
+                    </div>
+
+                    {/* Left Row Labels */}
+                    <div className="flex flex-col justify-between mr-1" style={{ height: `${boardRows * cellSize}px` }}>
+                       {Array.from({length: boardRows}).map((_, i) => (
+                          <div key={`row-${i}`} className="flex items-center justify-end font-bold text-slate-400 text-[10px] sm:text-xs w-4 sm:w-6" style={{ height: `${cellSize}px` }}>
+                             {i}
+                          </div>
+                       ))}
+                    </div>
+
+                    {/* The Board */}
+                    <div
+                      className="inline-grid bg-slate-200 border-2 border-slate-400 shadow-inner"
+                      style={{ gridTemplateColumns: `repeat(${boardCols}, ${cellSize}px)`, gridTemplateRows: `repeat(${boardRows}, ${cellSize}px)` }}
+                    >
+                  {board.map((row, i) =>
+                    row.map((cell, j) => {
+                      const isLastMove = lastMove && lastMove[0] === i && lastMove[1] === j;
+                      const aiMoveData = topAiMoves.find(m => m.row === i && m.col === j);
+                      // Only show top move on board IF thinking AND it is the highest prob move
+                      const isTop1Move = isAiThinking && aiMoveData && topAiMoves.length > 0 && topAiMoves[0].row === i && topAiMoves[0].col === j;
+                      const isThreat = threats.has(`${i},${j}`);
+                      return (
+                        <button
+                          key={`${i}-${j}`}
+                          onClick={(e) => {
+                            if (isCustomMode) handleCustomClick(i, j, e);
+                            else makeMove(i, j);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault(); // Luôn chặn menu chuột phải của trình duyệt
+                            if (isCustomMode) handleCustomClick(i, j, e);
+                          }}
+                          disabled={!isCustomMode && (cell !== 0 || winner !== null || isAiThinking || isReplaying)}
+                          className={`board-cell border border-slate-300 transition flex items-center justify-center text-xl sm:text-2xl relative disabled:cursor-not-allowed ${isThreat ? "shadow-[inset_0_0_15px_rgba(239,68,68,0.8)]" : ""}`}
+                          style={{ width: `${cellSize}px`, height: `${cellSize}px`, fontSize: `${Math.floor(cellSize * 0.6)}px` }}
+                        >
+                          {/* Last move highlight */}
+                          {isLastMove && (
+                             <div className="absolute w-3/4 h-3/4 rounded-full bg-yellow-300/60"></div>
+                          )}
+
+                          {/* AI Top Move Overlay */}
+                          {isTop1Move && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-blue-500/40 rounded-full ai-prob-badge z-10 m-1">
+                               <span className="text-[10px] font-black text-white drop-shadow-md">{Math.round(aiMoveData.prob * 100)}%</span>
+                            </div>
+                          )}
+
+                          {/* Pieces */}
+                          {cell === 1 && (
+                            <div className="w-[60%] h-[60%] relative z-20 piece-x flex items-center justify-center">
+                              <div className="absolute w-[110%] h-[4px] sm:h-[5px] bg-current rotate-45 rounded-full"></div>
+                              <div className="absolute w-[110%] h-[4px] sm:h-[5px] bg-current -rotate-45 rounded-full"></div>
+                            </div>
+                          )}
+                          {cell === -1 && (
+                            <div className="w-[60%] h-[60%] rounded-full border-[4px] sm:border-[5px] border-current piece-o relative z-20"></div>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<GomokuUI />);
+  </script>
+</body>
+</html>
