@@ -15,5 +15,8 @@ COPY frontend /app/frontend
 # Expose port
 EXPOSE 8000
 
+# Set Python path
+ENV PYTHONPATH=/app/backend
+
 # Run uvicorn server
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
