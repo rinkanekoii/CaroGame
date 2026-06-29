@@ -14,8 +14,8 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   
-  <!-- Favicon (Simple Blue Go Stone) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%233b82f6'/></svg>" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
 
   <!-- React & Babel (Offline Support) -->
   <script src="lib/react.min.js"></script>
@@ -802,28 +802,23 @@
                 )}
                 
                 <div className="flex flex-col items-center w-full">
-                  <div className="flex justify-between mt-1" style={{ width: `${boardCols * cellSize}px` }}>
-                       {Array.from({length: boardCols}).map((_, j) => (
-                          <div key={`col-${j}`} className="flex justify-center font-bold text-slate-400 text-[10px] sm:text-xs" style={{ width: `${cellSize}px` }}>
-                             {j}
-                          </div>
-                       ))}
-                    </div>
 
                   <div className="flex flex-row items-center justify-center gap-1 sm:gap-3 w-full">
-                    <div className="w-4 md:w-6 rounded-xl overflow-hidden border border-[#2a3045] bg-[#0f121e] flex flex-col justify-end shadow-lg relative mr-1 sm:mr-3" style={{ height: `${boardRows * cellSize}px` }}>
+                    <div className="w-4 md:w-6 rounded-xl overflow-hidden border-2 border-slate-700 bg-blue-500 flex flex-col justify-end shadow-lg shadow-black/50 relative mr-1 sm:mr-3" style={{ height: `${boardRows * cellSize}px` }}>
                       <div 
-                        className="w-full transition-all duration-700 ease-in-out bg-rose-500" 
+                        className="w-full transition-all duration-700 ease-in-out bg-red-500" 
                         style={{ 
                           height: `${Math.max(0, Math.min(100, (1.0 - evalScore) / 2.0 * 100))}%`
                         }}
                       ></div>
-                      <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-[#2a3045] z-10"></div>
+                      <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-slate-800/40 z-10"></div>
                       <div className="absolute inset-0 flex flex-col justify-between items-center py-2 z-20 pointer-events-none">
                         <div className="flex flex-col items-center">
                           <span className="text-[12px] font-black text-white leading-none">X</span>
+                          <span className="text-[8px] sm:text-[9px] font-bold text-white/90 mt-1">{Math.round((evalScore + 1.0) / 2.0 * 100)}%</span>
                         </div>
                         <div className="flex flex-col items-center">
+                          <span className="text-[8px] sm:text-[9px] font-bold text-white/90 mb-1">{Math.round((1.0 - evalScore) / 2.0 * 100)}%</span>
                           <span className="text-[12px] font-black text-white leading-none">O</span>
                         </div>
                       </div>
@@ -833,7 +828,7 @@
                     <div className="flex flex-col justify-between mr-1" style={{ height: `${boardRows * cellSize}px` }}>
                        {Array.from({length: boardRows}).map((_, i) => (
                           <div key={`row-${i}`} className="flex items-center justify-end font-bold text-slate-400 text-[10px] sm:text-xs w-4 sm:w-6" style={{ height: `${cellSize}px` }}>
-                             {i}
+                             {i + 1}
                           </div>
                        ))}
                     </div>
@@ -885,6 +880,16 @@
                     })
                   )}
                 </div>
+
+                    {/* Bottom Column Labels (A, B, C...) */}
+                    <div className="flex justify-between mt-1" style={{ width: `${boardCols * cellSize}px` }}>
+                       {Array.from({length: boardCols}).map((_, j) => (
+                          <div key={`col-${j}`} className="flex justify-center font-bold text-slate-400 text-[10px] sm:text-xs" style={{ width: `${cellSize}px` }}>
+                             {String.fromCharCode(65 + j)}
+                          </div>
+                       ))}
+                    </div>
+
                 </div>
                 </div>
              </div>
