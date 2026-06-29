@@ -636,9 +636,16 @@
                 {winner ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-slate-600">Winner</span>
-                    <span className={`text-2xl font-black ${winner === 1 ? 'text-indigo-600' : 'text-red-500'}`}>
-                      {winner === 1 ? 'X' : 'O'}
-                    </span>
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      {winner === 'X' ? (
+                        <div className="w-full h-full relative piece-x flex items-center justify-center text-blue-600">
+                          <div className="absolute w-[110%] h-[4px] bg-current rotate-45 rounded-full shadow-sm"></div>
+                          <div className="absolute w-[110%] h-[4px] bg-current -rotate-45 rounded-full shadow-sm"></div>
+                        </div>
+                      ) : (
+                        <div className="w-[85%] h-[85%] rounded-full border-[4px] border-current piece-o relative text-rose-500 shadow-sm"></div>
+                      )}
+                    </div>
                   </div>
                 ) : isAiThinking ? (
                   <div className="flex items-center gap-3">
@@ -651,7 +658,16 @@
                 ) : (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600 text-sm font-semibold">Turn</span>
-                    <span className={`text-2xl font-black ${currentPlayer === 'X' ? 'text-indigo-600' : 'text-red-500'}`}>{currentPlayer}</span>
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      {currentPlayer === 'X' ? (
+                        <div className="w-full h-full relative piece-x flex items-center justify-center text-blue-600">
+                          <div className="absolute w-[110%] h-[4px] bg-current rotate-45 rounded-full shadow-sm"></div>
+                          <div className="absolute w-[110%] h-[4px] bg-current -rotate-45 rounded-full shadow-sm"></div>
+                        </div>
+                      ) : (
+                        <div className="w-[85%] h-[85%] rounded-full border-[4px] border-current piece-o relative text-rose-500 shadow-sm"></div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
