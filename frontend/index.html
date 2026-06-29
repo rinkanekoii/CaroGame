@@ -575,7 +575,7 @@
         );
       }
 
-      const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex].topAiMoves || []) : []);
+      const currentRankingMoves = isAiThinking ? topAiMoves : (historyIndex >= 0 ? (history[historyIndex]?.topAiMoves || []) : []);
 
       return (
         <div className="min-h-screen flex flex-col text-neutral-200" style={{background: 'linear-gradient(135deg, #181818, #121212, #181818)'}}>
