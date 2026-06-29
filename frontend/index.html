@@ -47,7 +47,7 @@
     .board-cell:hover:not(:disabled) { background-color: rgba(255,255,255,0.7); box-shadow: inset 0 0 10px rgba(255,255,255,0.8); }
     
     .piece-x { color: #6366f1; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 2px 4px rgba(99,102,241,0.3); }
-    .piece-o { color: #84cc16; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 2px 4px rgba(132,204,22,0.3); }
+    .piece-o { color: #ef4444; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 2px 4px rgba(239,68,68,0.3); }
     
     @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); } 70% { box-shadow: 0 0 0 6px rgba(99,102,241,0); } 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); } }
@@ -541,15 +541,15 @@
             <div className="rounded-2xl p-8 w-full max-w-lg glass-panel border border-white/40 shadow-2xl">
               <div className="text-center mb-6">
                 <img src="assets/favicon.png" alt="" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
-                <h1 className="text-3xl font-black text-slate-900">CaroNet AI</h1>
-                <div className="text-[10px] uppercase tracking-widest text-slate-600 font-bold mt-1">MCTS v2.0 · Neural AlphaZero</div>
+                <h1 className="text-4xl font-black text-slate-900">CaroNet AI</h1>
+                <div className="text-sm font-bold tracking-[0.2em] text-slate-600 mb-6">MCTS V2.0 • Neural AlphaZero</div>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Game Mode</label>
                   <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
-                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}>Player vs AI</button>
-                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}>Player vs Player</button>
+                    <button onClick={() => setGameMode("pva")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pva" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>Player vs AI</button>
+                    <button onClick={() => setGameMode("pvp")} className={`flex-1 py-2 rounded-md text-sm font-bold transition ${gameMode === "pvp" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>Player vs Player</button>
                   </div>
                 </div>
 
@@ -558,8 +558,8 @@
                     <div>
                       <label className="block text-xs font-bold mb-1.5 text-slate-600 uppercase tracking-wider">Play As</label>
                       <div className="flex rounded-lg p-1 bg-transparent border border-white/40">
-                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
-                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-slate-700 text-white shadow" : "text-slate-600 hover:text-white"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
+                        <button onClick={() => setPlayerSymbol("X")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "X" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}><i className="fa-solid fa-xmark"></i> X (First)</button>
+                        <button onClick={() => setPlayerSymbol("O")} className={`flex-1 py-2 rounded-md text-sm font-bold transition flex justify-center items-center gap-1.5 ${playerSymbol === "O" ? "bg-indigo-500 text-white shadow-md" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}><i className="fa-regular fa-circle text-xs"></i> O (Second)</button>
                       </div>
                     </div>
                     <div>
@@ -635,7 +635,7 @@
                 {winner ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-slate-600">Winner</span>
-                    <span className={`text-xl font-black ${winner === 1 ? 'text-indigo-500' : 'text-lime-500'}`}>
+                    <span className={`text-2xl font-black ${winner === 1 ? 'text-indigo-600' : 'text-red-500'}`}>
                       {winner === 1 ? 'X' : 'O'}
                     </span>
                   </div>
@@ -650,7 +650,7 @@
                 ) : (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600 text-sm font-semibold">Turn</span>
-                    <span className={`text-xl font-black text-slate-900`}>{currentPlayer}</span>
+                    <span className={`text-2xl font-black ${currentPlayer === 'X' ? 'text-indigo-600' : 'text-red-500'}`}>{currentPlayer}</span>
                   </div>
                 )}
               </div>
@@ -723,7 +723,7 @@
                 </button>
               </div>
 
-              <div className="text-center text-[10px] text-slate-600 font-mono py-2">Neural AlphaZero Engine</div>
+              <div className="text-center text-sm text-slate-600 font-bold py-2 mt-4">Neural AlphaZero Engine</div>
             </aside>
 
             {/* ─── Main Board Area ─── */}
@@ -739,8 +739,8 @@
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <span className="text-xs text-slate-600">Next:</span>
                     <div className="flex rounded-lg overflow-hidden bg-transparent border border-white/50">
-                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-slate-700 text-white" : "text-slate-600 hover:text-white"}`}>X</button>
-                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-slate-700 text-white" : "text-slate-600 hover:text-white"}`}>O</button>
+                      <button onClick={() => setCustomNextPlayer(1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === 1 ? "bg-indigo-500 text-white shadow-sm" : "bg-white/50 text-slate-600 hover:text-indigo-600 hover:bg-white/80"}`}>X</button>
+                      <button onClick={() => setCustomNextPlayer(-1)} className={`px-3 py-1 text-xs font-bold transition ${customNextPlayer === -1 ? "bg-red-500 text-white shadow-sm" : "bg-white/50 text-slate-600 hover:text-red-600 hover:bg-white/80"}`}>O</button>
                     </div>
                   </div>
                   <div className="flex gap-2">
