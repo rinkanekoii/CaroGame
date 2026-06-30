@@ -22,8 +22,13 @@ class ONNXNetWrapper(nn.Module):
         if "CUDAExecutionProvider" in available_providers:
             providers.append("CUDAExecutionProvider")
         providers.append("CPUExecutionProvider")
+        sess_options = ort.SessionOptions()
+        sess_options.intra_op_num_threads = 2
+        sess_options.inter_op_num_threads = 2
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        sess_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         self.session = ort.InferenceSession(
-            onnx_path, providers=providers
+            onnx_path, sess_options=sess_options, providers=providers
         )
         self.input_name = self.session.get_inputs()[0].name
         self.value_name = self.session.get_outputs()[0].name
@@ -759,6 +764,11 @@ class ProgressiveMCTS:
         self._states_buffer = np.empty(
             (self.batch_size, self._state_channels, self.board_rows, self.board_cols), dtype=np.float32
         )
+        # Neural network evaluation cache (transposition table)
+        self._nn_cache: Dict[int, Tuple[float, Dict[Tuple[int, int], float]]] = {}
+        self._nn_cache_max_size = 4096
+        self._nn_cache_hits = 0
+        self._nn_cache_misses = 0
 
     def reset_root(self) -> None:
         self.root = MCTSNode()
@@ -824,18 +834,24 @@ class ProgressiveMCTS:
             cur_player = leaf["player"]
             node = leaf["node"]
             logits = p_logits[i]
-            mask = (board.reshape(-1) == 0).astype(np.float32)
-            probs = np.exp(logits - np.max(logits)) * mask
+            flat_board = board.reshape(-1)
+            mask = (flat_board == 0).astype(np.float32)
+            logits_shifted = logits - logits.max()
+            probs = np.exp(logits_shifted) * mask
             total = probs.sum()
             if total <= 1e-8:
                 probs = mask
                 total = probs.sum()
-            probs = probs / (total + 1e-8)
-            priors: Dict[Tuple[int, int], float] = {}
-            for idx, prob in enumerate(probs):
-                if mask[idx] > 0:
-                    row, col = divmod(idx, self.board_cols)
-                    priors[(row, col)] = float(prob)
+            probs *= (1.0 / (total + 1e-8))
+            # Vectorized: extract non-zero indices directly
+            nz_indices = np.nonzero(mask)[0]
+            nz_probs = probs[nz_indices]
+            rows_arr = nz_indices // self.board_cols
+            cols_arr = nz_indices % self.board_cols
+            priors: Dict[Tuple[int, int], float] = {
+                (int(rows_arr[k]), int(cols_arr[k])): float(nz_probs[k])
+                for k in range(len(nz_indices))
+            }
             priors = filter_edge_moves(board, priors)
             
             if self.rule_type == 1:
@@ -909,7 +925,16 @@ class ProgressiveMCTS:
                 root.children = {move: MCTSNode(prior=prior) for move, prior in priors.items()}
         leaf_batch: List[dict] = []
         sims_done = 0
+        early_stop_threshold = 0.75  # Stop early if one move has >75% of visits
+        early_stop_min_sims = max(20, num_sims // 3)  # Need at least 1/3 of sims before early stop
         while sims_done < num_sims:
+            # Early termination: if one move clearly dominates, stop searching
+            if sims_done >= early_stop_min_sims and root.children:
+                total_visits = sum(c.N for c in root.children.values())
+                if total_visits > 0:
+                    max_visits = max(c.N for c in root.children.values())
+                    if max_visits / total_visits > early_stop_threshold:
+                        break
             node = root
             cur_board = board.copy()
             cur_player = player
@@ -952,16 +977,35 @@ class ProgressiveMCTS:
             if terminal:
                 sims_done += 1
                 continue
-            leaf_batch.append({"board": cur_board, "player": cur_player, "node": node, "path": path})
+            # Check NN cache before adding to batch
+            board_hash = hash(cur_board.tobytes()) ^ hash(cur_player)
+            cached = self._nn_cache.get(board_hash)
+            if cached is not None:
+                self._nn_cache_hits += 1
+                cached_value, cached_priors = cached
+                node.is_expanded = True
+                node.children = {move: MCTSNode(prior=prior) for move, prior in cached_priors.items()}
+                self.backup_path(path, -cached_value)
+                sims_done += 1
+                continue
+            self._nn_cache_misses += 1
+            leaf_batch.append({"board": cur_board, "player": cur_player, "node": node, "path": path, "board_hash": board_hash})
             current_batch_size = min(self.batch_size, max(1, num_sims // 10))
             if len(leaf_batch) >= current_batch_size or sims_done + len(leaf_batch) >= num_sims:
                 batch_results = self.expand_leaf_nodes_batch(leaf_batch)
-                for leaf, v_pred, _ in batch_results:
+                for leaf, v_pred, priors_result in batch_results:
                     leaf_value = -float(v_pred)
                     self.backup_path(leaf["path"], leaf_value)
+                    # Cache the result
+                    bh = leaf.get("board_hash")
+                    if bh is not None and priors_result:
+                        if len(self._nn_cache) >= self._nn_cache_max_size:
+                            # Evict oldest entries (simple: clear half)
+                            keys = list(self._nn_cache.keys())
+                            for k in keys[:len(keys) // 2]:
+                                del self._nn_cache[k]
+                        self._nn_cache[bh] = (float(v_pred), priors_result)
                 sims_done += len(leaf_batch)
-                import time
-                time.sleep(0.005) # Yield GIL
                 leaf_batch = []
         if root.children:
             return {move: child.N for move, child in root.children.items()}
