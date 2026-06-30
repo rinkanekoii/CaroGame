@@ -23,7 +23,7 @@
   <script src="lib/babel.min.js"></script>
   <!-- Tailwind CSS -->
   <script src="lib/tailwindcss.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <link href="lib/fontawesome/css/all.min.css" rel="stylesheet" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     body { 
@@ -74,6 +74,40 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+    /* Winning cells */
+    @keyframes winPulse {
+      0%, 100% { box-shadow: inset 0 0 8px rgba(234,179,8,0.6); background: rgba(234,179,8,0.25); }
+      50% { box-shadow: inset 0 0 16px rgba(234,179,8,0.9); background: rgba(234,179,8,0.45); }
+    }
+    .winning-cell { animation: winPulse 1.2s ease-in-out infinite; z-index: 10; }
+
+    .celebration-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+      animation: fadeInOverlay 0.3s ease;
+    }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+    .celebration-card {
+      background: rgba(255,255,255,0.95); border-radius: 24px;
+      padding: 40px 56px; text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .confetti-container { position: fixed; inset: 0; z-index: 99; pointer-events: none; overflow: hidden; }
+    .confetti-piece {
+      position: absolute; width: 10px; height: 10px;
+      top: -20px; animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+    @media (max-width: 768px) {
+      .sidebar-card { padding: 10px; margin-bottom: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -114,6 +148,64 @@
       const [isCustomMode, setIsCustomMode] = useState(false);
       const [customNextPlayer, setCustomNextPlayer] = useState(1);
       const [evalScore, setEvalScore] = useState(0.0);
+      const [winningLine, setWinningLine] = useState([]);
+      const [showCelebration, setShowCelebration] = useState(false);
+
+      const playMoveSound = () => {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 600;
+          osc.type = 'triangle';
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.08);
+        } catch(e) {}
+      };
+
+      const playWinSound = () => {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const notes = [523, 659, 784, 1047];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+            gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.12 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.3);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+          });
+        } catch(e) {}
+      };
+
+      const findWinningLine = (b, row, col, playerVal) => {
+        if (row == null || col == null) return [];
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        for (const [dr, dc] of directions) {
+          let cells = [[row, col]];
+          for (let i = 1; i < 6; i++) {
+            const nr = row + dr * i, nc = col + dc * i;
+            if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols && b[nr][nc] === playerVal) cells.push([nr, nc]);
+            else break;
+          }
+          for (let i = 1; i < 6; i++) {
+            const nr = row - dr * i, nc = col - dc * i;
+            if (nr >= 0 && nr < boardRows && nc >= 0 && nc < boardCols && b[nr][nc] === playerVal) cells.push([nr, nc]);
+            else break;
+          }
+          if (cells.length >= 5) return cells;
+        }
+        return [];
+      };
 
       useEffect(() => {
         if (typeof window !== "undefined") {
@@ -143,6 +235,8 @@
         setIsAutoPlaying(false);
         setThreats(new Set());
         setEvalScore(0.0);
+        setWinningLine([]);
+        setShowCelebration(false);
       };
 
       useEffect(() => {
@@ -284,6 +378,8 @@
         setEvalScore(prevState.evalScore || 0.0);
         setHistoryIndex(historyIndex - steps);
         setWinner(null);
+        setWinningLine([]);
+        setShowCelebration(false);
       };
 
       const redo = (steps = 1) => {
@@ -333,12 +429,16 @@
           newBoard[row][col] = currentPlayer === "X" ? 1 : -1;
           setBoard(newBoard);
           setLastMove([row, col]);
+          playMoveSound();
           const nextPlayer = currentPlayer === "X" ? "O" : "X";
           saveToHistory(newBoard, nextPlayer, [row, col], [], evalScore, historyIndex);
           setThreats(detectThreats(newBoard));
 
           if (checkWinner(newBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
             setWinner(currentPlayer);
+            setWinningLine(findWinningLine(newBoard, row, col, currentPlayer === "X" ? 1 : -1));
+            setShowCelebration(true);
+            playWinSound();
           } else {
             setCurrentPlayer(nextPlayer);
             setTopAiMoves([]); // Ẩn gợi ý nước đi trong chế độ PvP
@@ -365,12 +465,16 @@
         humanBoard[row][col] = currentPlayer === "X" ? 1 : -1;
         setBoard(humanBoard);
         setLastMove([row, col]);
+        playMoveSound();
         setThreats(detectThreats(humanBoard));
         const aiSymbol = playerSymbol === "X" ? "O" : "X";
         saveToHistory(humanBoard, aiSymbol, [row, col], [], evalScore, historyIndex);
 
         if (checkWinner(humanBoard, row, col, currentPlayer === "X" ? 1 : -1)) {
           setWinner(currentPlayer);
+          setWinningLine(findWinningLine(humanBoard, row, col, currentPlayer === "X" ? 1 : -1));
+          setShowCelebration(true);
+          playWinSound();
           return;
         }
 
@@ -392,8 +496,14 @@
           setThreats(detectThreats(aiBoard));
           setEvalScore(data.eval_score || 0.0);
           saveToHistory(aiBoard, playerSymbol, data.ai_move, tm, data.eval_score || 0.0);
+          playMoveSound();
           if (data.winner) {
             setWinner(data.winner === 1 ? "X" : "O");
+            if (data.ai_move) {
+              setWinningLine(findWinningLine(aiBoard, data.ai_move[0], data.ai_move[1], data.winner));
+            }
+            setShowCelebration(true);
+            playWinSound();
           } else {
             setCurrentPlayer(playerSymbol);
           }
@@ -530,7 +640,7 @@
         }
       };
 
-      const cellSize = Math.min(60, Math.floor(800 / Math.max(boardRows, boardCols)));
+      const cellSize = Math.min(60, Math.floor(800 / Math.max(boardRows, boardCols)), typeof window !== 'undefined' ? Math.floor((window.innerWidth - 120) / boardCols) : 60);
 
       if (showSettings) {
         return (
@@ -632,6 +742,7 @@
               <div className="sidebar-card">
                 <div className="text-xs uppercase tracking-widest text-slate-600 font-bold mb-2 flex items-center gap-1.5">
                   <i className="fa-solid fa-gamepad text-sm"></i> Status
+                  <span className="ml-auto text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Move {Math.max(0, historyIndex + 1)}</span>
                 </div>
                 {winner ? (
                   <div className="flex items-center justify-between">
@@ -673,7 +784,7 @@
               </div>
 
               {/* AI Predictions in Sidebar */}
-              {!isReplaying && (
+              {!isReplaying && gameMode !== "pvp" && (
                 <div className="sidebar-card">
                   <div className="text-xs uppercase tracking-widest text-slate-600 font-bold mb-2 flex items-center gap-1.5">
                     <i className="fa-solid fa-microchip text-sm"></i> AI Predictions
@@ -785,17 +896,17 @@
                   <div className="flex items-start gap-1">
 
                     {/* Eval Bar */}
-                    <div className="w-5 rounded-lg overflow-hidden bg-blue-600 flex flex-col justify-end relative mr-2 border border-white/50/50" style={{ height: `${boardRows * cellSize}px`, marginTop: '0px' }}>
+                    <div className="w-7 rounded-lg overflow-hidden bg-blue-600 flex flex-col justify-end relative mr-2 border border-white/50" style={{ height: `${boardRows * cellSize}px`, marginTop: '0px' }}>
                       <div className="w-full transition-all duration-700 ease-in-out bg-rose-600" style={{ height: `${Math.max(0, Math.min(100, (1.0 - evalScore) / 2.0 * 100))}%` }}></div>
                       
                       <div className="absolute inset-0 flex flex-col justify-between items-center py-1.5 z-20 pointer-events-none">
                         <div className="flex flex-col items-center drop-shadow-md">
-                          <span className="text-[10px] font-black text-white leading-none">X</span>
-                          <span className="text-[7px] font-bold text-white/90 mt-0.5">{Math.round((evalScore + 1.0) / 2.0 * 100)}%</span>
+                          <span className="text-xs font-black text-white leading-none">X</span>
+                          <span className="text-[9px] font-bold text-white/90 mt-0.5">{Math.round((evalScore + 1.0) / 2.0 * 100)}%</span>
                         </div>
                         <div className="flex flex-col items-center drop-shadow-md">
-                          <span className="text-[7px] font-bold text-white/90 mb-0.5">{Math.round((1.0 - evalScore) / 2.0 * 100)}%</span>
-                          <span className="text-[10px] font-black text-white leading-none">O</span>
+                          <span className="text-[9px] font-bold text-white/90 mb-0.5">{Math.round((1.0 - evalScore) / 2.0 * 100)}%</span>
+                          <span className="text-xs font-black text-white leading-none">O</span>
                         </div>
                       </div>
                       <div className="absolute inset-0 z-30" title={`X ${Math.round((evalScore + 1.0) / 2.0 * 100)}% – O ${Math.round((1.0 - evalScore) / 2.0 * 100)}%`}></div>
@@ -818,6 +929,7 @@
                   {board.map((row, i) =>
                     row.map((cell, j) => {
                       const isLastMove = lastMove && lastMove[0] === i && lastMove[1] === j;
+                      const isWinCell = winningLine.some(([wr, wc]) => wr === i && wc === j);
                       const aiMoveData = topAiMoves.find(m => m.row === i && m.col === j);
                       const isTop1Move = isAiThinking && aiMoveData && topAiMoves.length > 0 && topAiMoves[0].row === i && topAiMoves[0].col === j;
                       const isThreat = threats.has(`${i},${j}`);
@@ -833,7 +945,7 @@
                             if (isCustomMode) handleCustomClick(i, j, e);
                           }}
                           disabled={!isCustomMode && (cell !== 0 || winner !== null || isAiThinking || isReplaying)}
-                          className={`board-cell border border-slate-300 transition flex items-center justify-center text-xl sm:text-2xl relative disabled:cursor-not-allowed ${isThreat ? "bg-rose-500/20" : "hover:bg-slate-100"}`}
+                          className={`board-cell border border-slate-300 transition flex items-center justify-center text-xl sm:text-2xl relative disabled:cursor-not-allowed ${isWinCell ? "winning-cell" : ""} ${isThreat && !isWinCell ? "bg-rose-500/20" : !isWinCell ? "hover:bg-slate-100" : ""}`}
                           style={{ width: `${cellSize}px`, height: `${cellSize}px`, fontSize: `${Math.floor(cellSize * 0.6)}px` }}
                         >
                           {isLastMove && <div className="absolute inset-0 bg-indigo-500/20 z-0 pointer-events-none"></div>}
@@ -862,7 +974,7 @@
 
                   {/* Column labels (A, B, C...) */}
                   <div className="flex items-start gap-1 mt-1">
-                    <div className="w-5 mr-2"></div>
+                    <div className="w-7 mr-2"></div>
                     <div className="w-5 mr-0.5"></div>
                     <div className="flex border-2 border-transparent">
                       {Array.from({length: boardCols}).map((_, j) => (
@@ -876,6 +988,56 @@
               </div>
             </main>
           </div>
+
+          {/* ─── Celebration Overlay ─── */}
+          {showCelebration && winner && (
+            <>
+              <div className="confetti-container">
+                {Array.from({length: 40}).map((_, i) => {
+                  const colors = ['#f43f5e','#8b5cf6','#3b82f6','#10b981','#f59e0b','#ec4899'];
+                  const style = {
+                    left: Math.random() * 100 + '%',
+                    backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                    animationDuration: (Math.random() * 2 + 2) + 's',
+                    animationDelay: Math.random() * 1.5 + 's',
+                    width: (Math.random() * 8 + 6) + 'px',
+                    height: (Math.random() * 8 + 6) + 'px',
+                    borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                    transform: 'rotate(' + Math.random() * 360 + 'deg)',
+                  };
+                  return <div key={i} className="confetti-piece" style={style}></div>;
+                })}
+              </div>
+              <div className="celebration-overlay" onClick={() => setShowCelebration(false)}>
+                <div className="celebration-card" onClick={e => e.stopPropagation()}>
+                  <div className="mb-4">
+                    <div className="w-20 h-20 mx-auto flex items-center justify-center">
+                      {winner === 'X' ? (
+                        <div className="w-full h-full relative flex items-center justify-center text-blue-600">
+                          <div className="absolute w-[110%] h-[6px] bg-current rotate-45 rounded-full shadow-lg"></div>
+                          <div className="absolute w-[110%] h-[6px] bg-current -rotate-45 rounded-full shadow-lg"></div>
+                        </div>
+                      ) : (
+                        <div className="w-[85%] h-[85%] rounded-full border-[6px] border-current text-rose-500 shadow-lg"></div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-3xl font-black text-slate-900 mb-1">Victory!</div>
+                  <div className="text-slate-600 font-semibold mb-6">
+                    {winner === 'X' ? 'Player X' : 'Player O'} wins in {Math.max(0, historyIndex + 1)} moves
+                  </div>
+                  <div className="flex gap-3 justify-center">
+                    <button onClick={() => { setShowCelebration(false); setShowSettings(true); }} className="btn btn-primary py-3 px-6">
+                      <i className="fa-solid fa-rotate-right"></i> New Game
+                    </button>
+                    <button onClick={() => setShowCelebration(false)} className="btn btn-secondary py-3 px-6">
+                      <i className="fa-solid fa-eye"></i> Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       );
     };
