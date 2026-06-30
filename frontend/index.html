@@ -127,6 +127,25 @@
     const { useState, useEffect, useRef, useMemo } = React;
 
     const GomokuUI = () => {
+      const confettiOverlay = useMemo(() => (
+        <div className="confetti-container">
+          {Array.from({length: 40}).map((_, i) => {
+            const colors = ['#f43f5e','#8b5cf6','#3b82f6','#10b981','#f59e0b','#ec4899'];
+            const style = {
+              left: Math.random() * 100 + '%',
+              backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+              animationDuration: (Math.random() * 2 + 2) + 's',
+              animationDelay: Math.random() * 1.5 + 's',
+              width: (Math.random() * 8 + 6) + 'px',
+              height: (Math.random() * 8 + 6) + 'px',
+              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+              transform: 'rotate(' + Math.random() * 360 + 'deg)',
+            };
+            return <div key={i} className="confetti-piece" style={style}></div>;
+          })}
+        </div>
+      ), []);
+
       const [apiBase, setApiBase] = useState(() => {
         if (typeof window !== "undefined") {
           const saved = localStorage.getItem("gomoku_api_base");
@@ -1001,24 +1020,7 @@
           {/* ─── Celebration Overlay ─── */}
           {showCelebration && winner && (
             <>
-              {useMemo(() => (
-                <div className="confetti-container">
-                  {Array.from({length: 40}).map((_, i) => {
-                    const colors = ['#f43f5e','#8b5cf6','#3b82f6','#10b981','#f59e0b','#ec4899'];
-                    const style = {
-                      left: Math.random() * 100 + '%',
-                      backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                      animationDuration: (Math.random() * 2 + 2) + 's',
-                      animationDelay: Math.random() * 1.5 + 's',
-                      width: (Math.random() * 8 + 6) + 'px',
-                      height: (Math.random() * 8 + 6) + 'px',
-                      borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-                      transform: 'rotate(' + Math.random() * 360 + 'deg)',
-                    };
-                    return <div key={i} className="confetti-piece" style={style}></div>;
-                  })}
-                </div>
-              ), [])}
+              {confettiOverlay}
               <div className="celebration-overlay" onClick={() => setShowCelebration(false)}>
                 <div className="celebration-card" onClick={e => e.stopPropagation()}>
                   <div className="mb-4">
